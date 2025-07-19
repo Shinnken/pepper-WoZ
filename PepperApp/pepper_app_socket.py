@@ -22,7 +22,6 @@ class TCPSocketHandler:
         self.conn, addr = self.socket.accept()
         print(f"Connection accepted from {addr}")
         return addr
-    
 
     def exit(self):
         if hasattr(self, "conn") and self.conn:

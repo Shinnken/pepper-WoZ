@@ -6,7 +6,6 @@ import os
 import csv
 from pepper_app_socket_manager import SocketManager
 from pepper_app_ssh_manager import SSHManager
-from tkinter import filedialog
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -16,6 +15,7 @@ class App(customtkinter.CTk):
     def __init__(self, socket_manager: SocketManager):
         super().__init__()
         self.socket_manager = socket_manager
+        self.ssh_manager = None
 
         # configure window
         self.title("Pepper App")
@@ -135,8 +135,21 @@ class App(customtkinter.CTk):
         if not ip_value:
             tkinter.messagebox.showerror("Error", "Please enter an IP address")
             return
-        
+
         try:
+            # Get the host PC's IP address
+            host_ip = None
+            temp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                temp_socket.connect(("8.8.8.8", 80))
+                host_ip = temp_socket.getsockname()[0]
+            except Exception as e:
+                tkinter.messagebox.showerror("Error", f"Could not determine local IP: {e}")
+                return
+            finally:
+                temp_socket.close()
+            print(f"local ip: {host_ip}")
+
             try:
                 self.socket_manager.start()
             except socket.timeout:
@@ -148,18 +161,18 @@ class App(customtkinter.CTk):
             print("STARTED SOCKET")
 
 
-            ssh = SSHManager(username="nao", password="nao")
-            ssh.set_target(host=ip_value, port=22)
+            self.ssh_manager = SSHManager(username="nao", password="nao")
+            self.ssh_manager.set_target(host=ip_value, port=22)
             try:
-                ssh.connect()
+                self.ssh_manager.connect()
             except Exception as e:
                 tkinter.messagebox.showerror("Error", f"SSH connection error: {e}")
                 return
             print("SSH CONNECTED")
-            # TODO: Replace static IP with dynamic one of current pc
-            ssh.execute_command("python /home/nao/script/pepper_camera_service.py --host 192.168.50.132")
+            command_to_execute = f"nohup python /home/nao/script/pepper_camera_service.py --host {host_ip} > /home/nao/pepper_service.log 2>&1 &"
+            self.ssh_manager.execute_command(command_to_execute)
             print("Pepper camera service started")
-            
+
 
 
             try:
@@ -179,9 +192,9 @@ class App(customtkinter.CTk):
         except ValueError as e:
             tkinter.messagebox.showerror("Error", f"Invalid IP address format: {e}")
             return
-        
 
-        
+
+
         self.say_button.configure(state="normal")
         self.record_toggle_button.configure(state="normal")
         self.connect_button.configure(state="disabled")
@@ -223,9 +236,10 @@ class App(customtkinter.CTk):
     def close_app(self):
         try:
             self.socket_manager.handle_command("exit")
+            if self.ssh_manager:
+                self.ssh_manager.disconnect()
         except Exception as e:
             print(f"Error during cleanup: {e}")
         finally:
             self.destroy()
             print("Application closed.")
-        print("Application closed.")
