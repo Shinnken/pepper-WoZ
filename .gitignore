@@ -5,7 +5,12 @@ __pycache__/
 
 # C extensions
 *.so
+*.exe
+*.docx
+*.mp4
+*.ico
 
+bin/
 # Distribution / packaging
 .Python
 build/
