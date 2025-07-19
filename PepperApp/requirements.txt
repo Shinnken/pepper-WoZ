@@ -1,0 +1,11 @@
+# GUI Framework
+customtkinter>=5.2.0
+
+# Computer Vision
+opencv-python>=4.8.0
+
+# Scientific Computing
+numpy>=1.24.0
+
+# SSH Connection
+paramiko>=3.0.0

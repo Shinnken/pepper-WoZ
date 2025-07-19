@@ -5,6 +5,7 @@ import customtkinter
 import os
 import csv
 from pepper_app_socket_manager import SocketManager
+from pepper_app_ssh_manager import SSHManager
 from tkinter import filedialog
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
@@ -136,8 +137,6 @@ class App(customtkinter.CTk):
             return
         
         try:
-
-####BEGIN SOCKET
             try:
                 self.socket_manager.start()
             except socket.timeout:
@@ -147,18 +146,31 @@ class App(customtkinter.CTk):
                 tkinter.messagebox.showerror("Error", f"Unknown connection error: {e}")
                 return
             print("STARTED SOCKET")
-####END SOCKET
 
-####BEGIN SOCKET
+
+            ssh = SSHManager(username="nao", password="nao")
+            ssh.set_target(host=ip_value, port=22)
             try:
-                self.socket_manager.tcp_socket.accept_connection() #blocking
+                ssh.connect()
+            except Exception as e:
+                tkinter.messagebox.showerror("Error", f"SSH connection error: {e}")
+                return
+            print("SSH CONNECTED")
+            # TODO: Replace static IP with dynamic one of current pc
+            ssh.execute_command("python /home/nao/script/pepper_camera_service.py --host 192.168.50.132")
+            print("Pepper camera service started")
+            
+
+
+            try:
+                self.socket_manager.tcp_socket.accept_connection() #blocking # TU SIE BLOKUJE I TIMEOUTUJE
+                self.socket_manager.is_connected = True  # Set connection flag
             except socket.timeout:
                 tkinter.messagebox.showerror("Error", "Socket connection timed out. Check connection with Pepper.")
                 return
             except Exception as e:
                 tkinter.messagebox.showerror("Error", f"Unknown connection error: {e}")
                 return
-####END SOCKET        
             print("ACCEPTED SOCKET")
 
         except Exception as e:
@@ -168,10 +180,11 @@ class App(customtkinter.CTk):
             tkinter.messagebox.showerror("Error", f"Invalid IP address format: {e}")
             return
         
+
+        
         self.say_button.configure(state="normal")
         self.record_toggle_button.configure(state="normal")
         self.connect_button.configure(state="disabled")
-
 
     def text_button_event(self, text):
         self.large_textbox.delete("0.0", "end")
@@ -208,6 +221,11 @@ class App(customtkinter.CTk):
             self.loading_bar.set(1)
 
     def close_app(self):
-        self.socket_manager.handle_command("exit")
-        self.destroy()
+        try:
+            self.socket_manager.handle_command("exit")
+        except Exception as e:
+            print(f"Error during cleanup: {e}")
+        finally:
+            self.destroy()
+            print("Application closed.")
         print("Application closed.")

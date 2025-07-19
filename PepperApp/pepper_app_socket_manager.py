@@ -4,6 +4,7 @@ class SocketManager:
     def __init__(self, host: str, port_tcp: int, port_udp: int):
         self.tcp_socket: TCPSocketHandler = TCPSocketHandler(host, port_tcp)
         self.udp_socket: UDPSocketHandler = UDPSocketHandler(host, port_udp)
+        self.is_connected = False
         
     def start(self):
         self.tcp_socket.start()
@@ -23,16 +24,28 @@ class SocketManager:
         """
         Sends the command to camera service
         """
-        if command == "speak":
+        if command.startswith("speak"):
             if len(args) == 0:
                 print("No text provided for 'speak' command.")
                 return
             text = args[0]
-            command = f"speak {text}"
+            command_to_send = f"speak {text}"
+        else:
+            command_to_send = command
 
-        print("sending command: ", command)
-        command_bytes: bytes = command.encode('utf-8')
-        self.tcp_socket.send(command_bytes)
+        print("sending command: ", command_to_send)
+        
+        # Don't send commands if not connected (except exit)
+        if not self.is_connected and command != "exit":
+            print("Not connected, command ignored")
+            return
+            
+        try:
+            command_bytes: bytes = command_to_send.encode('utf-8')
+            self.tcp_socket.send(command_bytes)
+        except (OSError, AttributeError) as e:
+            print(f"Failed to send command: {e}")
+            return
         
         match command:
             case "start":
@@ -43,13 +56,7 @@ class SocketManager:
                 self.stop()
             case "exit":
                 self.exit()
-            case _:
-                print(f"Unknown command: {command}")
-                return
         print("command sent")
-
-
-
 
     def stop(self):
         while True:
@@ -63,7 +70,8 @@ class SocketManager:
 
 
     def exit(self):
+        self.is_connected = False
         self.tcp_socket.exit()
         self.udp_socket.exit()
         if self.udp_socket.is_alive():
-            self.udp_socket.join()
+            self.udp_socket.join(timeout=2)  # Add timeout to prevent hanging

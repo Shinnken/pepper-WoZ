@@ -2,6 +2,7 @@ import socket
 import threading
 from video_maker import make_video_from_frames
 import time
+
 class TCPSocketHandler:
     """
     Responsible for sending commands to Pepper camera service
@@ -11,10 +12,11 @@ class TCPSocketHandler:
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.host, self.port))
+        self.conn = None
 
     def start(self) -> None | tuple[str, int]:
         self.socket.listen(1)
-        self.socket.settimeout(5)  # Set a timeout for the accept call
+        self.socket.settimeout(10)  # Set a timeout for the accept call
 
     def accept_connection(self):
         self.conn, addr = self.socket.accept()
@@ -23,19 +25,30 @@ class TCPSocketHandler:
     
 
     def exit(self):
-        self.socket.close()
-        if hasattr(self, "conn"):
-            self.conn.close()
+        if hasattr(self, "conn") and self.conn:
+            try:
+                self.conn.close()
+            except:
+                pass
+        try:
+            self.socket.close()
+        except:
+            pass
 
     def send(self, data: bytes):
-        if hasattr(self, "conn"):
-            self.conn.sendall(data)
+        if hasattr(self, "conn") and self.conn:
+            try:
+                self.conn.sendall(data)
+            except (OSError, AttributeError):
+                print("Failed to send data - connection closed")
     
     def receive(self, lenght: int):
-        if hasattr(self, "conn"):
-            return self.conn.recv(lenght)
-
-    
+        if hasattr(self, "conn") and self.conn:
+            try:
+                return self.conn.recv(lenght)
+            except (OSError, AttributeError):
+                print("Failed to receive data - connection closed")
+                return None
 
 class UDPSocketHandler(threading.Thread):
     """
@@ -43,8 +56,10 @@ class UDPSocketHandler(threading.Thread):
     """
     def __init__(self, host, port):
         threading.Thread.__init__(self)
+        self.daemon = True  # Make thread daemon so it doesn't block shutdown
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((host, port))
+        self.socket.settimeout(1.0)  # Add timeout to allow checking running flag
         self.running = False
         self.listening = False
         self.frames: list[bytes] = []
@@ -64,10 +79,14 @@ class UDPSocketHandler(threading.Thread):
                 time.sleep(0.1)
                 continue
 
-
             if self.frames_countdown != 0:
-                # sluchanie kiedy sa klatki do odbioru
-                data, _ = self.socket.recvfrom(RECV_SIZE)
+                try:
+                    data, _ = self.socket.recvfrom(RECV_SIZE)
+                except socket.timeout:
+                    continue  # Check running flag again
+                except OSError:
+                    break  # Socket closed
+                    
                 if not data:
                     time.sleep(0.1)
                     continue
@@ -96,4 +115,7 @@ class UDPSocketHandler(threading.Thread):
     def exit(self):
         self.listening = False
         self.running = False
-        self.socket.close()
+        try:
+            self.socket.close()
+        except:
+            pass
