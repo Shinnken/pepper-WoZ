@@ -2,7 +2,7 @@ import paramiko
 import time
 
 pepper_python_path = "/opt/aldebaran/lib/python2.7/site-packages"
-COMMAND_TO_RUN = f"nohup env PYTHONPATH={pepper_python_path} python2 ~/led_test.py &"
+COMMAND_TO_RUN = f"nohup env PYTHONPATH={pepper_python_path} python ~/led_test.py &"
 
 # Create an SSH client instance
 client = paramiko.SSHClient()
@@ -22,11 +22,9 @@ try:
     print("Connection successful.")
     print(f"Executing command: {COMMAND_TO_RUN}")
 
-    # Execute the command
     client.exec_command(COMMAND_TO_RUN)
 
-    # Note: We don't need to wait for the command to finish because it's running
-    # in the background. We can give it a second to ensure it started.
+    # give it a second to ensure it started.
     time.sleep(1)
 
 

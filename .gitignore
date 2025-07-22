@@ -213,3 +213,6 @@ __marimo__/
 
 #Clean Coder
 .clean_coder
+
+venv311/
+.idea/
