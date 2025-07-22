@@ -1,0 +1,1 @@
+PepperApp - app running on host computer, PepperCameraService - app running locally on the robot. Wher creating, exchanging, inserting python functions, remember to separate one from another by at least 2 newlines.
