@@ -4,12 +4,12 @@ import cv2
 import numpy as np
 
 def compress_frame_data_but_slower(frame_data, quality=80):
-    print "tutaj zaczynam kompresowac"
+    # print "tutaj zaczynam kompresowac"
     width = frame_data[0]
     height = frame_data[1]
     raw_bytes = frame_data[6]  # Could be a list of ints
 
-    print('frame:', frame_data[:6])
+    # print('frame:', frame_data[:6])
     
     # Convert to a string/buffer:
     buffer_data = ''.join(chr(b) for b in raw_bytes)
@@ -22,17 +22,17 @@ def compress_frame_data_but_slower(frame_data, quality=80):
     timestamp_us = frame_data[5]
     timestamp = timestamp_ms + timestamp_us / 1e6
 
-    print "a tutaj kurde bele koncze"
+    # print "a tutaj kurde bele koncze"
 
     return output.getvalue()
 
 def compress_frame_data(frame_data, quality=80):
-    print "tutaj zaczynam kompresowac"
+    # print "tutaj zaczynam kompresowac"
     width = frame_data[0]
     height = frame_data[1]
     raw_bytes = frame_data[6]  # list of ints
 
-    print('frame:', frame_data[:6])
+    # print('frame:', frame_data[:6])
 
     np_arr = np.frombuffer(bytearray(raw_bytes), dtype=np.uint8)
 
@@ -51,6 +51,6 @@ def compress_frame_data(frame_data, quality=80):
     timestamp_us = frame_data[5]
     timestamp = timestamp_ms + timestamp_us / 1e6
 
-    print "a tutaj kurde bele koncze"
+    # print "a tutaj kurde bele koncze"
 
     return compressed_data

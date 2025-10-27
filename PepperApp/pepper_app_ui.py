@@ -5,7 +5,7 @@ import customtkinter
 import os
 import csv
 from pepper_app_socket_manager import SocketManager
-from pepper_app_ssh_manager import SSHManager
+from tkinter import filedialog
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -84,7 +84,7 @@ class App(customtkinter.CTk):
                     if len(row) >= 2:
                         dialogue_options[row[0]] = row[1]
         else:
-            new_path = r"C:\Users\british\Downloads\Pepper\Pepper (1)\Pepper\bin\Dialogi.csv"
+            new_path = r"/home/shinken/Documents/Pepper_tests/Pepper_last/Pepper/PepperApp/dialogue_options.csv"
 
             if new_path and os.path.isfile(new_path):
                 dialogue_options = {}
@@ -137,19 +137,8 @@ class App(customtkinter.CTk):
             return
 
         try:
-            # Get the host PC's IP address
-            host_ip = None
-            temp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            try:
-                temp_socket.connect(("8.8.8.8", 80))
-                host_ip = temp_socket.getsockname()[0]
-            except Exception as e:
-                tkinter.messagebox.showerror("Error", f"Could not determine local IP: {e}")
-                return
-            finally:
-                temp_socket.close()
-            print(f"local ip: {host_ip}")
 
+####BEGIN SOCKET
             try:
                 self.socket_manager.start()
             except socket.timeout:
@@ -159,31 +148,18 @@ class App(customtkinter.CTk):
                 tkinter.messagebox.showerror("Error", f"Unknown connection error: {e}")
                 return
             print("STARTED SOCKET")
+####END SOCKET
 
-
-            self.ssh_manager = SSHManager(username="nao", password="nao")
-            self.ssh_manager.set_target(host=ip_value, port=22)
+####BEGIN SOCKET
             try:
-                self.ssh_manager.connect()
-            except Exception as e:
-                tkinter.messagebox.showerror("Error", f"SSH connection error: {e}")
-                return
-            print("SSH CONNECTED")
-            command_to_execute = f"nohup python /home/nao/script/pepper_camera_service.py --host {host_ip} > /home/nao/pepper_service.log 2>&1 &"
-            self.ssh_manager.execute_command(command_to_execute)
-            print("Pepper camera service started")
-
-
-
-            try:
-                self.socket_manager.tcp_socket.accept_connection() #blocking # TU SIE BLOKUJE I TIMEOUTUJE
-                self.socket_manager.is_connected = True  # Set connection flag
+                self.socket_manager.tcp_socket.accept_connection() #blocking
             except socket.timeout:
                 tkinter.messagebox.showerror("Error", "Socket connection timed out. Check connection with Pepper.")
                 return
             except Exception as e:
                 tkinter.messagebox.showerror("Error", f"Unknown connection error: {e}")
                 return
+####END SOCKET        
             print("ACCEPTED SOCKET")
 
         except Exception as e:
@@ -192,12 +168,11 @@ class App(customtkinter.CTk):
         except ValueError as e:
             tkinter.messagebox.showerror("Error", f"Invalid IP address format: {e}")
             return
-
-
-
+        
         self.say_button.configure(state="normal")
         self.record_toggle_button.configure(state="normal")
         self.connect_button.configure(state="disabled")
+
 
     def text_button_event(self, text):
         self.large_textbox.delete("0.0", "end")
@@ -234,12 +209,6 @@ class App(customtkinter.CTk):
             self.loading_bar.set(1)
 
     def close_app(self):
-        try:
-            self.socket_manager.handle_command("exit")
-            if self.ssh_manager:
-                self.ssh_manager.disconnect()
-        except Exception as e:
-            print(f"Error during cleanup: {e}")
-        finally:
-            self.destroy()
-            print("Application closed.")
+        self.socket_manager.handle_command("exit")
+        self.destroy()
+        print("Application closed.")

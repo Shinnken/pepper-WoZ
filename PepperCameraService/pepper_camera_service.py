@@ -3,7 +3,6 @@ from pepper_camera import PepperCamera
 from pepper_socket_manager import PepperSocketManager
 
 
-
 if __name__ == "__main__":
     print("Starting Pepper Camera Client")
     parser = argparse.ArgumentParser(description='Pepper Camera Client')
