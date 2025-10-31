@@ -6,6 +6,7 @@ import os
 import csv
 from pepper_app_socket_manager import SocketManager
 from tkinter import filedialog
+from ssh_deploy_remote import deploy_remote
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -20,6 +21,9 @@ class App(customtkinter.CTk):
         # configure window
         self.title("Pepper App")
         self.geometry(f"{1100}x{580}")
+        # self.attributes("-fullscreen", True)
+        self.after(0, self._maximize_window)
+        # fullscreen but buttons still accessible
         self.protocol("WM_DELETE_WINDOW", self.close_app)
 
         # configure grid layout (4x4)
@@ -39,7 +43,7 @@ class App(customtkinter.CTk):
         # create IP input and connect button
         # self.ip_entry = customtkinter.CTkEntry(self, placeholder_text="Enter IP")
         self.ip_entry = customtkinter.CTkEntry(self)
-        self.ip_entry.insert(0, "192.168.1.110")
+        self.ip_entry.insert(0, "192.168.1.102")
         self.ip_entry.grid(row=0, column=0, padx=20, pady=20, sticky="w")
         self.connect_button = customtkinter.CTkButton(self, text="Connect")
         self.connect_button.grid(row=0, column=1, padx=20, pady=20, sticky="w")
@@ -70,64 +74,56 @@ class App(customtkinter.CTk):
         self.say_button = customtkinter.CTkButton(self, text="Say", width=120, height=40)
         self.say_button.grid(row=3, column=0, columnspan=2, padx=20, pady=(0, 20), sticky="ew")
 
-        # attempt to read from an Excel-like CSV file
-        script_folder = os.path.dirname(os.path.abspath(__file__))
-        dialogue_file = os.path.join(script_folder, "dialogue_options.csv")
-        if os.path.isfile(dialogue_file):
-            dialogue_options = {}
-            with open(dialogue_file, "r", newline="", encoding="utf-8-sig") as f:
-                content = f.read()
-                delim = ";" if ";" in content else ","
-                f.seek(0)
-                reader = csv.reader(f, delimiter=delim)
-                for row in reader:
-                    if len(row) >= 2:
-                        dialogue_options[row[0]] = row[1]
-        else:
-            new_path = r"/home/shinken/Documents/Pepper_tests/Pepper_last/Pepper/PepperApp/dialogue_options.csv"
-
-            if new_path and os.path.isfile(new_path):
-                dialogue_options = {}
-                with open(new_path, "r", newline="", encoding="utf-8-sig") as f:
-                    content = f.read()
-                    delim = ";" if ";" in content else ","
-                    f.seek(0)
-                    reader = csv.reader(f, delimiter=delim)
-                    for row in reader:
-                        if len(row) >= 2:
-                            dialogue_options[row[0]] = row[1]
-            else:
-                dialogue_options = {f"Text {i+1}": f"Text {i+1}" for i in range(18)}
-
-        # create scrollable frame with X text buttons
-        self.scrollable_frame = customtkinter.CTkScrollableFrame(self, label_text="Text Buttons", width=400)
-        self.scrollable_frame.bind_all("<Button-4>", lambda e: self.scrollable_frame._parent_canvas.yview("scroll", -1, "units"))
-        self.scrollable_frame.bind_all("<Button-5>", lambda e: self.scrollable_frame._parent_canvas.yview("scroll", 1, "units"))
-        self.scrollable_frame.grid(row=2, column=2, columnspan=3, padx=20, pady=20, sticky="nsew")  # Adjusted columnspan
-        self.scrollable_frame.grid_columnconfigure((0, 1, 2), weight=1)
-
-
-        for idx, (key, button_text) in enumerate(dialogue_options.items()):
-
-            row = idx // 3
-            col = idx % 3
-            # Create a button with a maximum width of 20 characters
-            # and a label that truncates the text if it's too long
-            button_label = key[:20] + "..." if len(key) > 20 else key
-            btn = customtkinter.CTkButton(
-                self.scrollable_frame,
-                text=button_label,
-                width=120,
-                height=60,
-                command=lambda txt=button_text: self.text_button_event(txt)
-            )
-            btn.grid(row=row, column=col, padx=10, pady=5, sticky="ew")
+        # removed legacy dialogue_options/scrollable_frame setup in favor of new layout
 
         self.connect_button.configure(command=self.connect)
         self.say_button.configure(command=self.say_text)
         self.record_toggle_button.configure(state="disabled")
         self.say_button.configure(state="disabled")
+
+        self.dialogue_container = customtkinter.CTkFrame(self)
+        self.dialogue_container.grid(row=2, column=2, columnspan=3, padx=20, pady=20, sticky="nsew")
+        self.dialogue_container.grid_columnconfigure(0, weight=1)
+        self.dialogue_container.grid_columnconfigure(1, weight=1)
+        self.dialogue_container.grid_rowconfigure(1, weight=1)
+
+        toggle_frame = customtkinter.CTkFrame(self.dialogue_container)
+        toggle_frame.grid(row=0, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
+        toggle_frame.grid_columnconfigure((0, 1), weight=1)
+
+        self.wstep_button = customtkinter.CTkButton(toggle_frame, text="wstęp", command=self.show_start_frame, state="disabled")
+        self.wstep_button.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        self.dylematy_button = customtkinter.CTkButton(toggle_frame, text="dylematy", command=self.show_problems_frame)
+        self.dylematy_button.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+        self.left_container = customtkinter.CTkFrame(self.dialogue_container)
+        self.left_container.grid(row=1, column=0, sticky="nsew", padx=(0, 10), pady=(10, 0))
+        self.left_container.grid_rowconfigure(0, weight=1)
+        self.left_container.grid_columnconfigure(0, weight=1)
+
+        self.start_frame = customtkinter.CTkFrame(self.left_container)
+        self.start_frame.grid(row=0, column=0, sticky="nsew")
+        for i in range(5):
+            customtkinter.CTkButton(self.start_frame, text=f"greetings {i+1}").grid(row=i, column=0, padx=5, pady=5, sticky="ew")
+
+        self.problems_frame = customtkinter.CTkFrame(self.left_container)
+        self.problems_frame.grid(row=0, column=0, sticky="nsew")
+        for i in range(5):
+            customtkinter.CTkButton(self.problems_frame, text=f"odpowiedzi {i+1}").grid(row=i, column=0, padx=5, pady=5, sticky="ew")
+        self.problems_frame.grid_remove()
+
+        self.right_scroll_frame = customtkinter.CTkScrollableFrame(self.dialogue_container)
+        self.right_scroll_frame.grid(row=1, column=1, sticky="nsew", pady=(10, 0))
+        self.right_scroll_frame.grid_columnconfigure(0, weight=1)
+        for row_index, label in enumerate(("afirmacja", "cisza", "nie na temat")):
+            group_frame = customtkinter.CTkFrame(self.right_scroll_frame)
+            group_frame.grid(row=row_index, column=0, padx=5, pady=(0, 10), sticky="ew")
+            group_frame.grid_columnconfigure(0, weight=1)
+            for i in range(5):
+                customtkinter.CTkButton(group_frame, text=f"{label} {i+1}").grid(row=i, column=0, padx=5, pady=5, sticky="ew")
+
         self.loading_bar.set(0)
+        self.show_start_frame()
 
 
     def connect(self):
@@ -149,7 +145,8 @@ class App(customtkinter.CTk):
                 return
             print("STARTED SOCKET")
 ####END SOCKET
-
+            deploy_remote(ip_value)
+            print("DEPLOYED REMOTE SCRIPT")
 ####BEGIN SOCKET
             try:
                 self.socket_manager.tcp_socket.accept_connection() #blocking
@@ -208,7 +205,30 @@ class App(customtkinter.CTk):
             self.loading_bar.configure(mode="determinate")
             self.loading_bar.set(1)
 
+    def show_start_frame(self):
+        self.problems_frame.grid_remove()
+        self.start_frame.grid()
+        self.wstep_button.configure(state="disabled")
+        self.dylematy_button.configure(state="normal")
+
+    def show_problems_frame(self):
+        self.start_frame.grid_remove()
+        self.problems_frame.grid()
+        self.dylematy_button.configure(state="disabled")
+        self.wstep_button.configure(state="normal")
+
     def close_app(self):
         self.socket_manager.handle_command("exit")
         self.destroy()
         print("Application closed.")
+
+    def _maximize_window(self):
+        try:
+            self.state("zoomed")
+        except tkinter.TclError:
+            try:
+                self.attributes("-zoomed", True)
+            except tkinter.TclError:
+                screen_width = self.winfo_screenwidth()
+                screen_height = self.winfo_screenheight()
+                self.geometry(f"{screen_width}x{screen_height}+0+0")

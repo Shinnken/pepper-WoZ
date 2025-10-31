@@ -15,6 +15,11 @@ if __name__ == "__main__":
         print(f"Error: {e}")
         if socket_manager is not None:
                 socket_manager.exit()
+    except OSError as e:
+        print(f"OS Error: {e}")
+        if socket_manager is not None:
+                socket_manager.exit()
+        
 
 
     app = App(socket_manager)
