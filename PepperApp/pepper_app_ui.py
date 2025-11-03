@@ -46,6 +46,7 @@ class App(customtkinter.CTk):
         self.ip_entry.grid(row=0, column=0, padx=20, pady=20, sticky="w")
         self.connect_button = customtkinter.CTkButton(self, text="Connect")
         self.connect_button.grid(row=0, column=1, padx=20, pady=20, sticky="w")
+        self._initialize_button_colors(self.connect_button)
 
         # create ID Pacjenta label and entry
         self.id_label = customtkinter.CTkLabel(self, text="ID Pacjenta:")
@@ -64,6 +65,7 @@ class App(customtkinter.CTk):
             command=self.toggle_recording
         )
         self.record_toggle_button.grid(row=0, column=4, padx=20, pady=20, sticky="ew")  # Moved to a new column
+        self._initialize_button_colors(self.record_toggle_button)
         self.loading_bar = customtkinter.CTkProgressBar(self, progress_color="#a60d02")
         self.loading_bar.grid(row=1, column=2, columnspan=3, padx=20, pady=10, sticky="ew")  # Adjusted columnspan
 
@@ -72,18 +74,23 @@ class App(customtkinter.CTk):
         self.large_textbox.grid(row=2, column=0, columnspan=2, padx=20, pady=(20, 10), sticky="nsew")
         self.say_button = customtkinter.CTkButton(self, text="Say", width=120, height=40)
         self.say_button.grid(row=3, column=0, columnspan=2, padx=20, pady=(0, 20), sticky="ew")
+        self._initialize_button_colors(self.say_button)
 
         # removed legacy dialogue_options/scrollable_frame setup in favor of new layout
 
-        self.connect_button.configure(command=self.connect)
-        self.say_button.configure(command=self.say_text)
-        self.record_toggle_button.configure(state="disabled")
-        self.say_button.configure(state="disabled")
         self.button_template_path = os.path.join(os.path.dirname(__file__), "button_layout_template_3.tsv")
         self.button_definitions = self._load_button_definitions(self.button_template_path)
         self._active_scroll_canvas = None
         self._used_button_fg_color = ("#f9cb4d", "#a87b0f")
         self._used_button_hover_color = ("#f0b928", "#8f670d")
+        self._disabled_button_fg_color = ("#3b3b3b", "#333333")
+        self._disabled_button_hover_color = ("#3b3b3b", "#333333")
+        self._disabled_button_text_color = "#1f6aa5"
+
+        self.connect_button.configure(command=self.connect)
+        self.say_button.configure(command=self.say_text)
+        self._set_button_state(self.record_toggle_button, "disabled")
+        self._set_button_state(self.say_button, "disabled")
 
         self.dialogue_container = customtkinter.CTkFrame(self)
         self.dialogue_container.grid(row=2, column=2, columnspan=3, padx=20, pady=20, sticky="nsew")
@@ -95,10 +102,12 @@ class App(customtkinter.CTk):
         toggle_frame.grid(row=0, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
         toggle_frame.grid_columnconfigure((0, 1), weight=1)
 
-        self.wstep_button = customtkinter.CTkButton(toggle_frame, text="wstęp", command=self.show_start_frame, state="disabled")
+        self.wstep_button = customtkinter.CTkButton(toggle_frame, text="Wstęp + Zakończenie", command=self.show_start_frame)
         self.wstep_button.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
-        self.dylematy_button = customtkinter.CTkButton(toggle_frame, text="dylematy", command=self.show_problems_frame)
+        self.dylematy_button = customtkinter.CTkButton(toggle_frame, text="Dylematy ", command=self.show_problems_frame)
         self.dylematy_button.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self._initialize_button_colors(self.wstep_button)
+        self._initialize_button_colors(self.dylematy_button)
 
         self.left_container = customtkinter.CTkFrame(self.dialogue_container)
         self.left_container.grid(row=1, column=0, sticky="nsew", padx=(0, 10), pady=(10, 0))
@@ -141,6 +150,7 @@ class App(customtkinter.CTk):
             )
             toggle_button.grid(row=0, column=index, padx=5, sticky="ew")
             self.problem_toggle_container.grid_columnconfigure(index, weight=1)
+            self._initialize_button_colors(toggle_button)
             self.problem_toggle_buttons.append(toggle_button)
 
             subframe = customtkinter.CTkScrollableFrame(self.problem_frames_container)
@@ -225,9 +235,9 @@ class App(customtkinter.CTk):
             tkinter.messagebox.showerror("Error", f"Invalid IP address format: {e}")
             return
         
-        self.say_button.configure(state="normal")
-        self.record_toggle_button.configure(state="normal")
-        self.connect_button.configure(state="disabled")
+        self._set_button_state(self.say_button, "normal")
+        self._set_button_state(self.record_toggle_button, "normal")
+        self._set_button_state(self.connect_button, "disabled")
 
 
     def text_button_event(self, text):
@@ -237,7 +247,7 @@ class App(customtkinter.CTk):
     def say_text(self):
         text = self.large_textbox.get("0.0", "end")
         self.socket_manager.handle_command("speak", text)
-        self.large_textbox.delete("0.0", "end")
+        # self.large_textbox.delete("0.0", "end")
 
     def toggle_recording(self):
         if self.record_toggle_button.cget("text") == "Record":
@@ -348,8 +358,7 @@ class App(customtkinter.CTk):
                 container,
                 text=label
             )
-            button.original_fg_color = button.cget("fg_color")
-            button.original_hover_color = button.cget("hover_color")
+            self._initialize_button_colors(button)
             button.configure(command=lambda payload=value, btn=button: self._handle_template_button_click(btn, payload))
             button.grid(row=row_index, column=0, padx=5, pady=5, sticky="ew")
 
@@ -400,7 +409,57 @@ class App(customtkinter.CTk):
 
     def _handle_template_button_click(self, button, payload):
         self.text_button_event(payload)
+        button._active_override_colors = (self._used_button_fg_color, self._used_button_hover_color)
         button.configure(fg_color=self._used_button_fg_color, hover_color=self._used_button_hover_color)
+
+    def _initialize_button_colors(self, button):
+        if button is None:
+            return
+
+        if not hasattr(button, "_original_fg_color"):
+            button._original_fg_color = button.cget("fg_color")
+        if not hasattr(button, "_original_hover_color"):
+            button._original_hover_color = button.cget("hover_color")
+        if not hasattr(button, "_original_text_color"):
+            button._original_text_color = button.cget("text_color")
+
+    def _restore_button_colors(self, button):
+        self._initialize_button_colors(button)
+        active_override = getattr(button, "_active_override_colors", None)
+
+        if active_override:
+            fg_color, hover_color = active_override
+        else:
+            fg_color = getattr(button, "_original_fg_color", None)
+            hover_color = getattr(button, "_original_hover_color", None)
+
+        kwargs = {}
+        if fg_color is not None:
+            kwargs["fg_color"] = fg_color
+        if hover_color is not None:
+            kwargs["hover_color"] = hover_color
+
+        original_text_color = getattr(button, "_original_text_color", None)
+        if original_text_color not in (None, ""):
+            kwargs["text_color"] = original_text_color
+
+        if kwargs:
+            button.configure(**kwargs)
+
+    def _set_button_state(self, button, state: str):
+        self._initialize_button_colors(button)
+        button.configure(state=state)
+
+        if state == "disabled":
+            kwargs = {
+                "fg_color": self._disabled_button_fg_color,
+                "hover_color": self._disabled_button_hover_color,
+            }
+            if self._disabled_button_text_color:
+                kwargs["text_color"] = self._disabled_button_text_color
+            button.configure(**kwargs)
+        else:
+            self._restore_button_colors(button)
 
     def show_problem_subframe(self, index: int):
         if not self.problem_frame_keys or not self.problem_subframes:
@@ -418,22 +477,22 @@ class App(customtkinter.CTk):
 
         for button_index, button in enumerate(self.problem_toggle_buttons):
             state = "disabled" if button_index == index else "normal"
-            button.configure(state=state)
+            self._set_button_state(button, state)
 
         self.active_problem_index = index
 
     def show_start_frame(self):
         self.problems_frame.grid_remove()
         self.start_frame.grid()
-        self.wstep_button.configure(state="disabled")
-        self.dylematy_button.configure(state="normal")
+        self._set_button_state(self.wstep_button, "disabled")
+        self._set_button_state(self.dylematy_button, "normal")
 
     def show_problems_frame(self):
         self.start_frame.grid_remove()
         self.problems_frame.grid()
         self.show_problem_subframe(self.active_problem_index)
-        self.dylematy_button.configure(state="disabled")
-        self.wstep_button.configure(state="normal")
+        self._set_button_state(self.dylematy_button, "disabled")
+        self._set_button_state(self.wstep_button, "normal")
 
     def close_app(self):
         self.socket_manager.handle_command("exit")
