@@ -1,0 +1,10 @@
+section	group	label	value
+start	default	Hello there	Hello there
+start	default	Good morning	Good morning
+problems	1	Discuss symptom A	Discuss symptom A
+problems	1	Discuss symptom B	Discuss symptom B
+problems	2	Offer advice	Offer advice
+problems	3	Wrap up conversation	Wrap up conversation
+right	affirmation	You are doing great	You are doing great
+right	silence	Allow for a pause	Allow for a pause
+right	off_topic	Let's change the topic	Let's change the topic

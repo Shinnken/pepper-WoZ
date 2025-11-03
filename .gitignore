@@ -11,6 +11,9 @@ __pycache__/
 *.ico
 *.wav
 
+# all files with number before .tsv extension
+*[0-9].tsv
+
 
 bin/
 # Distribution / packaging

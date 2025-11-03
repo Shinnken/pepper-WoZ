@@ -11,7 +11,7 @@ def make_video_from_frames(frames, patient_id, audio_bytes=None, mux_audio=True)
         print("No frames to process.")
         return
 
-    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    current_time = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     width, height = 640, 480
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')

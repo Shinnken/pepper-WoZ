@@ -1,3 +1,4 @@
+#!./venv/bin/python3
 from pepper_app_socket_manager import SocketManager
 from pepper_app_ui import App
 # from pepper_app_ssh_manager import SSHManager
@@ -24,4 +25,5 @@ if __name__ == "__main__":
 
     app = App(socket_manager)
     app.mainloop()
+
     

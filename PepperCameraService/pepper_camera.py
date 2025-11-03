@@ -1,5 +1,6 @@
 import qi
 import threading
+from collections import deque
 from frame_compresser import compress_frame_data
 from SoundReciver_py2 import SoundReceiverModule
 #test
@@ -24,7 +25,8 @@ sound_module_instance.start()
 class PepperCamera(object):
     def __init__(self):
         # Initialize fields BEFORE creating services, so init_qi_session can set them.
-        self.frames = []
+        # Deque gives O(1) pops from the left, avoiding quadratic slowdowns when streaming frames
+        self.frames = deque()
         self.pepper_camera_recorder = None
         self.sound_module_instance = None
         self.audio_bytes = None
@@ -123,6 +125,6 @@ class PepperCameraRecorder(threading.Thread):
 
     def run(self):
         while self.is_recording:
-            frame_data = self.session.service("ALVideoDevice").getImageRemote(self.vid_handle)
-            frame_data = compress_frame_data(frame_data)
+            frame_data_raw = self.session.service("ALVideoDevice").getImageRemote(self.vid_handle)
+            frame_data = compress_frame_data(frame_data_raw)
             self.frames.append(frame_data)

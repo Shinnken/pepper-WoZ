@@ -108,7 +108,7 @@ class PepperSocketManager():
         self.udp_thread_running = True
         while self.udp_thread_running:
             while len(self.pepper_camera.frames) > 0:
-                frame_data = self.pepper_camera.frames.pop(0)
+                frame_data = self.pepper_camera.frames.popleft()
                 # print("sending bytes")
                 # print(len(frame_data))
                 # print(type(frame_data))
