@@ -1,79 +1,77 @@
-import cv2 # Still needed for VideoWriter_fourcc, but not the loop
+import cv2
 import numpy as np
 from datetime import datetime
 import os
 import tempfile
 import subprocess
-import wave # Keep this easy Python logic
-import io
 
-# --- IMPORT YOUR NEW C++ MODULE ---
-try:
-    import video_maker_cpp
-except ImportError:
-    print("="*50)
-    print("ERROR: Could not import C++ module 'video_maker_cpp'.")
-    print("Did you build it? Run: python3 setup.py install")
-    print("="*50)
-    raise
 
 def make_video_from_frames(frames, patient_id, audio_bytes=None, mux_audio=True):
-    """
-    High-level Python wrapper that uses the C++ core for video creation.
-    """
     if not frames:
         print("No frames to process.")
         return
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     width, height = 640, 480
-    
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video_path = f'output_{current_time}_{patient_id}.mp4'
-    
-    # --- Keep Python logic for FPS calculation ---
+    # Derive FPS from audio duration if available; else default to 15
     fps = 15.0
     if audio_bytes:
         try:
+            import wave, io
             with wave.open(io.BytesIO(audio_bytes), 'rb') as wf:
                 fr = wf.getframerate()
                 n_frames_a = wf.getnframes()
                 dur = n_frames_a / float(fr) if fr > 0 else 0
                 if dur > 0:
                     fps = max(1.0, min(60.0, len(frames) / dur))
-                    print(f"Calculated FPS from audio: {fps} ({len(frames)} frames / {dur:.2f}s)")
-        except Exception as e:
-            print(f"Could not get FPS from audio: {e}. Defaulting to {fps} fps.")
+        except Exception:
             pass
-    
-    # --- CALL THE C++ ACCELERATOR ---
-    # This is the only part that changes
-    print(f"Calling C++ core to create video at {video_path}...")
-    try:
-        result_path = video_maker_cpp.create_video_core(
-            frames, 
-            video_path, 
-            fps, 
-            width, 
-            height
-        )
-        if not result_path:
-            print("C++ core failed to create video.")
-            return
-    except Exception as e:
-        print(f"Error calling C++ module: {e}")
-        return
-    # --- End of C++ call ---
+    out = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
 
-    # --- Keep all Python logic for audio muxing ---
+    for idx, frame_data in enumerate(frames):
+        # Skip empty or obviously invalid buffers to avoid OpenCV assertion
+        if not frame_data or len(frame_data) < 16:
+            print(f"Skipping frame {idx}: empty or too small buffer ({0 if not frame_data else len(frame_data)} bytes)")
+            continue
+        try:
+            np_data = np.frombuffer(frame_data, dtype=np.uint8)
+            if np_data.size == 0:
+                print(f"Skipping frame {idx}: empty decoded buffer")
+                continue
+            image = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
+        except Exception as e:
+            print(f"Skipping frame {idx}: imdecode error: {e}")
+            continue
+        if image is None:
+            print(f"Skipping frame {idx}: decode returned None")
+            continue
+        # Ensure 3 channels BGR
+        if len(image.shape) == 2:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        elif image.shape[2] == 1:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        # Ensure size is consistent
+        if (image.shape[1], image.shape[0]) != (width, height):
+            image = cv2.resize(image, (width, height))
+        out.write(image)
+
+    out.release()
+
     if audio_bytes:
         try:
+            # Persist audio to a WAV file for debugging and reuse it for muxing
             audio_path = f'audio_{current_time}_{patient_id}.wav'
             with open(audio_path, 'wb') as f:
                 f.write(audio_bytes)
 
+            # Keep audio_path for debugging
             print(f"Saved debug WAV: {audio_path}")
 
             if mux_audio:
+                # Mux using ffmpeg if available
                 output_path = f'output_{current_time}_{patient_id}_with_audio.mp4'
                 ffmpeg_cmd = [
                     'ffmpeg', '-y',
@@ -87,8 +85,8 @@ def make_video_from_frames(frames, patient_id, audio_bytes=None, mux_audio=True)
                 try:
                     subprocess.run(ffmpeg_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     print(f"Video with audio created successfully: {output_path}")
+                    # Optionally remove the video without audio
                     os.remove(video_path)
-                    os.remove(audio_path) # Clean up temp audio file
                 except Exception as e:
                     print(f"ffmpeg failed to mux audio: {e}. Keeping video without audio at {video_path}")
             else:
@@ -96,4 +94,4 @@ def make_video_from_frames(frames, patient_id, audio_bytes=None, mux_audio=True)
         except Exception as e:
             print(f"Failed to handle audio muxing: {e}. Keeping video without audio at {video_path}")
     else:
-        print(f"Video created successfully (no audio provided): {video_path}")
+        print("Video created successfully (no audio provided).")

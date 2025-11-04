@@ -1,6 +1,5 @@
 import socket
 import threading
-import io
 import os
 
 class PepperSocketManager():

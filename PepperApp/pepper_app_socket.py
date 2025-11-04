@@ -1,6 +1,6 @@
 import socket
 import threading
-from video_maker import make_video_from_frames
+from video_maker_old import make_video_from_frames
 import time
 import os
 class TCPSocketHandler:
@@ -134,9 +134,11 @@ class UDPSocketHandler(threading.Thread):
     def run(self):
         RECV_SIZE = 1400
         self.running = True
-        bytes_received = b""
+        # Use mutable bytearray instead of immutable bytes
+        bytes_received = bytearray()
         receiving_audio = False
-        audio_buf = b""
+        audio_buf = bytearray() 
+
         while self.running:
             if not self.listening:
                 time.sleep(0.1)
@@ -188,10 +190,10 @@ class UDPSocketHandler(threading.Thread):
                 except socket.timeout:
                     continue
                 except Exception:
-                    time.sleep(0.05)
+                    time.sleep(0.02)
                     continue
                 if not data:
-                    time.sleep(0.05)
+                    time.sleep(0.02)
                     continue
                 self._last_packet_ts = now
                 # Handle audio control markers
@@ -204,8 +206,8 @@ class UDPSocketHandler(threading.Thread):
                     # finish the partial frame so we don't stall waiting for its END.
                     if bytes_received:
                         # Finalize any partial frame before switching to audio mode
-                        self.frames.append(bytes_received)
-                        bytes_received = b""
+                        self.frames.append(bytes(bytes_received)) 
+                        bytes_received.clear() # Reset the bytearray
                         if self.frames_countdown > 0:
                             self.frames_countdown -= 1
                             print(f"Frames left: {self.frames_countdown} (forced finalize on AUDIO_START)")
@@ -216,16 +218,16 @@ class UDPSocketHandler(threading.Thread):
                     self._audio_bytes_accum = 0
                     # If any audio data arrived before the marker, include it
                     if self._pre_audio_chunks:
-                        audio_buf = b"".join(self._pre_audio_chunks)
+                        audio_buf = bytearray(b"".join(self._pre_audio_chunks))
                         self._pre_audio_chunks = []
                         self._pre_audio_bytes = 0
                     else:
-                        audio_buf = b""
-                    print("AUDIO_START received; preloaded {} bytes".format(len(audio_buf)))
+                        audio_buf.clear() # Reset
+                        print("AUDIO_START received; preloaded {} bytes".format(len(audio_buf)))
                     continue
                 if self.use_udp_audio and data == b"AUDIO_END":
                     receiving_audio = False
-                    self.audio_bytes = audio_buf
+                    self.audio_bytes = bytes(audio_buf)
                     self.audio_done = True
                     print(f"Audio received: {len(self.audio_bytes)} bytes in {self._audio_chunks} chunks")
                     self._audio_chunks = 0
@@ -265,11 +267,11 @@ class UDPSocketHandler(threading.Thread):
                 if data == b"END":
                     # odebrano wszystkie dane z klatki
                     if bytes_received:
-                        self.frames.append(bytes_received)
+                        self.frames.append(bytes(bytes_received))
+                        bytes_received.clear()
                     else:
                         # Ignore stray END without data (could be due to packet loss or overlap with AUDIO markers)
                         print("Warning: received END without frame data; skipping")
-                    bytes_received = b""
                     if self.frames_countdown > 0:
                         self.frames_countdown -= 1
                         print(f"Frames left: {self.frames_countdown}")

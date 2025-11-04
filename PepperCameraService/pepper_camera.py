@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 import qi
 import threading
 from collections import deque

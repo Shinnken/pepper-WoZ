@@ -2,6 +2,7 @@ import sys
 import wave
 from array import array
 from io import BytesIO
+import numpy as np
 
 
 PY2 = sys.version_info[0] == 2
@@ -83,27 +84,27 @@ class SoundReceiverModule(object):
         return self._to_wav(raw_bytes, nb_channels)
 
     def _to_wav(self, audio_bytes, nb_channels):
-        samples = array('h')
-        try:
-            samples.frombytes(audio_bytes)
-        except AttributeError:
-            samples.fromstring(audio_bytes)
+        samples_np = np.frombuffer(audio_bytes, dtype=np.int16)
+
         if nb_channels > 1:
-            frames = len(samples) // nb_channels
-            write_index = 0
-            read_index = 0
-            for _ in range(frames):
-                total = 0
-                for _ in range(nb_channels):
-                    total += samples[read_index]
-                    read_index += 1
-                samples[write_index] = total // nb_channels
-                write_index += 1
-            del samples[write_index:]
-        if hasattr(samples, "tobytes"):
-            mono_bytes = samples.tobytes()
+            try:
+                samples_np = samples_np.reshape(-1, nb_channels)
+                mono_np = samples_np.mean(axis=1).astype(np.int16)
+            
+            except ValueError as e:
+                # Handle potential partial buffer
+                print("Audio buffer warning (reshape failed): {}. Truncating.".format(e))
+                cutoff = (len(samples_np) // nb_channels) * nb_channels
+                samples_np = samples_np[:cutoff].reshape(-1, nb_channels)
+                mono_np = samples_np.mean(axis=1).astype(np.int16)
         else:
-            mono_bytes = samples.tostring()
+            mono_np = samples_np
+        
+        if hasattr(mono_np, "tobytes"):
+            mono_bytes = mono_np.tobytes()
+        else:
+            mono_bytes = mono_np.tostring() # Python 2 fallback
+
         buf = BytesIO()
         wav = wave.open(buf, 'wb')
         wav.setnchannels(1)
@@ -114,6 +115,7 @@ class SoundReceiverModule(object):
         data = buf.getvalue()
         buf.close()
         return data
+
 
     def processRemote(self, nbOfChannels, nbrOfSamplesByChannel, timestamp, buffer):
         self.last_nb_channels = nbOfChannels or self.default_channels

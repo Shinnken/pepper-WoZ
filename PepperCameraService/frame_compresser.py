@@ -3,29 +3,6 @@ from PIL import Image
 import cv2
 import numpy as np
 
-def compress_frame_data_but_slower(frame_data, quality=80):
-    # print "tutaj zaczynam kompresowac"
-    width = frame_data[0]
-    height = frame_data[1]
-    raw_bytes = frame_data[6]  # Could be a list of ints
-
-    # print('frame:', frame_data[:6])
-    
-    # Convert to a string/buffer:
-    buffer_data = ''.join(chr(b) for b in raw_bytes)
-
-    image = Image.frombytes("RGB", (width, height), buffer_data, "raw", "RGB") # type: ignore
-    output = io.BytesIO()
-    image.save(output, format="JPEG", quality=quality)
-
-    timestamp_ms = frame_data[4]
-    timestamp_us = frame_data[5]
-    timestamp = timestamp_ms + timestamp_us / 1e6
-
-    # print "a tutaj kurde bele koncze"
-
-    return output.getvalue()
-
 def compress_frame_data(frame_data, quality=80):
     # print "tutaj zaczynam kompresowac"
     width = frame_data[0]

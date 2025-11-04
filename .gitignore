@@ -10,6 +10,9 @@ __pycache__/
 *.mp4
 *.ico
 *.wav
+*.png
+*.jpg
+*.jpeg
 
 # all files with number before .tsv extension
 *[0-9].tsv

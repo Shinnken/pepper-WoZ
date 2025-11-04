@@ -4,12 +4,12 @@ import tkinter.messagebox
 import customtkinter
 import os
 import csv
+import threading
 from pepper_app_socket_manager import SocketManager
 from ssh_deploy_remote import deploy_remote
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
-
 
 class App(customtkinter.CTk):
     def __init__(self, socket_manager: SocketManager):
@@ -24,6 +24,9 @@ class App(customtkinter.CTk):
         self.after(0, self._maximize_window)
         # fullscreen but buttons still accessible
         self.protocol("WM_DELETE_WINDOW", self.close_app)
+        self._window_icon_image = None
+        self._configure_window_icon()
+
 
         # configure grid layout (4x4)
         self.grid_columnconfigure(1, weight=1)
@@ -195,7 +198,99 @@ class App(customtkinter.CTk):
         self.show_start_frame()
 
 
+
+
+    def _threaded_connect(self, ip_value):
+        """
+        Runs the blocking connection logic in a separate thread.
+        """
+        try:
+            # --- BLOCK 1 ---
+            try:
+                self.socket_manager.start()
+            except socket.timeout:
+                # Use .after() to safely call a UI function from this thread
+                self.after(0, lambda: tkinter.messagebox.showerror("Error", "Socket start timed out. Check connection."))
+                return
+            except Exception as e:
+                self.after(0, lambda: tkinter.messagebox.showerror("Error", f"Socket start error: {e}"))
+                return
+            
+            # --- BLOCK 2 ---
+            # Note: deploy_remote needs to be thread-safe
+            # Assuming it's a blocking function (like subprocess.run)
+            # deploy_remote(ip_value) 
+            
+            # --- BLOCK 3 ---
+            try:
+                self.socket_manager.tcp_socket.accept_connection() #blocking
+            except socket.timeout:
+                self.after(0, lambda: tkinter.messagebox.showerror("Error", "Socket accept timed out. Pepper app not started?"))
+                return
+            except Exception as e:
+                self.after(0, lambda: tkinter.messagebox.showerror("Error", f"Socket accept error: {e}"))
+                return
+
+            # --- SUCCESS ---
+            # All blocks finished. Now, update the UI.
+            tkinter.messagebox.showinfo("Success", "Connection established successfully!")
+            # We MUST use self.after() to safely tell the main UI thread
+            # to run these functions.
+            def _update_ui_on_success():
+                self._set_button_state(self.say_button, "normal")
+                self._set_button_state(self.record_toggle_button, "normal")
+                self.loading_bar.stop()
+                self.loading_bar.set(0)
+                # Re-enable connect button *only* if you have disconnect logic
+                # For now, we'll leave it disabled
+                # self._set_button_state(self.connect_button, "normal")
+            
+            self.after(0, _update_ui_on_success)
+
+        except Exception as e:
+            # Catch-all for other errors (e.g., deploy_remote failure)
+            self.after(0, lambda: tkinter.messagebox.showerror("Error", f"Connection failed: {e}"))
+            # Also re-enable the connect button so they can try again
+            self.after(0, self._re_enable_connect_button)
+
+
+
     def connect(self):
+        ip_value = self.ip_entry.get()
+        if not ip_value:
+            tkinter.messagebox.showerror("Error", "Please enter an IP address")
+            return
+            
+        # 1. Disable the connect button immediately
+        self._set_button_state(self.connect_button, "disabled")
+        
+        # 2. Show a loading indicator
+        self.loading_bar.configure(mode="indeterminate")
+        self.loading_bar.start()
+
+        # 3. Create and start the worker thread
+        #    We pass the ip_value as an argument
+        connect_thread = threading.Thread(
+            target=self._threaded_connect, 
+            args=(ip_value,),
+            daemon=True  # daemon=True ensures thread exits when app closes
+        )
+        connect_thread.start()
+        
+        # The connect() function now finishes instantly,
+        # leaving the UI responsive while the thread runs.
+
+    def _re_enable_connect_button(self):
+        """Helper to re-enable UI on failure."""
+        self.loading_bar.stop()
+        self.loading_bar.set(0)
+        self._set_button_state(self.connect_button, "normal")
+
+
+
+
+
+    def connect_old(self):
         ip_value = self.ip_entry.get()
         if not ip_value:
             tkinter.messagebox.showerror("Error", "Please enter an IP address")
@@ -498,6 +593,28 @@ class App(customtkinter.CTk):
         self.socket_manager.handle_command("exit")
         self.destroy()
         print("Application closed.")
+
+    def _configure_window_icon(self):
+        icon_directory = os.path.dirname(__file__)
+        candidate_names = ["icon.png", "icon.ico"]
+
+        for name in candidate_names:
+            icon_path = os.path.join(icon_directory, name)
+            if not os.path.exists(icon_path):
+                continue
+
+            try:
+                if icon_path.lower().endswith(".ico") and os.name == "nt":
+                    self.iconbitmap(icon_path)
+                else:
+                    image = tkinter.PhotoImage(file=icon_path)
+                    self.iconphoto(True, image)
+                    self._window_icon_image = image
+                return
+            except tkinter.TclError as error:
+                print(f"Warning: failed to load window icon '{icon_path}': {error}")
+
+        # no suitable icon found or loaded; keep default without raising
 
     def _maximize_window(self):
         try:
