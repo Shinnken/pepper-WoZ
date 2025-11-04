@@ -37,9 +37,8 @@ class SocketManager:
         
         match command:
             case "start":
-                if args:
-                    self.udp_socket.set_patient_id(int(args[0]))
-                self.udp_socket.listening = True
+                patient_id = int(args[0]) if args else None
+                self.udp_socket.prepare_capture(patient_id)
             case "stop":
                 self.stop()
             case "exit":

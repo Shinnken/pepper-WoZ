@@ -2,8 +2,18 @@ import cv2
 import numpy as np
 from datetime import datetime
 import os
-import tempfile
 import subprocess
+
+
+def _compute_median(values):
+    if not values:
+        return None
+    sorted_vals = sorted(values)
+    n = len(sorted_vals)
+    mid = n // 2
+    if n % 2 == 1:
+        return float(sorted_vals[mid])
+    return (sorted_vals[mid - 1] + sorted_vals[mid]) / 2.0
 
 
 def make_video_from_frames(frames, patient_id, audio_bytes=None, mux_audio=True):
@@ -14,11 +24,57 @@ def make_video_from_frames(frames, patient_id, audio_bytes=None, mux_audio=True)
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     width, height = 640, 480
 
+    structured_frames = []
+    for idx, source in enumerate(frames):
+        if isinstance(source, tuple) and len(source) == 2:
+            ts_us, buffer_bytes = source
+        else:
+            ts_us = None
+            buffer_bytes = source
+        if not buffer_bytes:
+            continue
+        structured_frames.append({
+            "idx": idx,
+            "ts": ts_us,
+            "data": buffer_bytes,
+        })
+
+    if not structured_frames:
+        print("No decodable frames available after parsing.")
+        return
+
+    structured_frames.sort(key=lambda item: (item["ts"] is None, item["ts"] if item["ts"] is not None else item["idx"]))
+
+    filtered_frames = []
+    last_ts = None
+    for entry in structured_frames:
+        ts_us = entry["ts"]
+        if ts_us is not None:
+            if last_ts is not None and ts_us <= last_ts:
+                # Skip duplicate or retrograde frames to avoid visual rewinds
+                continue
+            last_ts = ts_us
+        filtered_frames.append(entry)
+
+    if not filtered_frames:
+        print("All frames were filtered out due to invalid timestamps.")
+        return
+
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video_path = f'output_{current_time}_{patient_id}.mp4'
-    # Derive FPS from audio duration if available; else default to 15
+    # Derive FPS from capture timestamps if available, otherwise fall back to audio duration or default
     fps = 15.0
-    if audio_bytes:
+    ts_values = [entry["ts"] for entry in filtered_frames if entry["ts"] is not None]
+    if len(ts_values) >= 2:
+        deltas = []
+        for i in range(1, len(ts_values)):
+            delta = ts_values[i] - ts_values[i - 1]
+            if delta > 0:
+                deltas.append(delta)
+        median_delta = _compute_median(deltas)
+        if median_delta and median_delta > 0:
+            fps = max(5.0, min(30.0, 1e6 / median_delta))
+    elif audio_bytes:
         try:
             import wave, io
             with wave.open(io.BytesIO(audio_bytes), 'rb') as wf:
@@ -26,12 +82,13 @@ def make_video_from_frames(frames, patient_id, audio_bytes=None, mux_audio=True)
                 n_frames_a = wf.getnframes()
                 dur = n_frames_a / float(fr) if fr > 0 else 0
                 if dur > 0:
-                    fps = max(1.0, min(60.0, len(frames) / dur))
+                    fps = max(1.0, min(60.0, len(filtered_frames) / dur))
         except Exception:
             pass
     out = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
 
-    for idx, frame_data in enumerate(frames):
+    for idx, entry in enumerate(filtered_frames):
+        frame_data = entry["data"]
         # Skip empty or obviously invalid buffers to avoid OpenCV assertion
         if not frame_data or len(frame_data) < 16:
             print(f"Skipping frame {idx}: empty or too small buffer ({0 if not frame_data else len(frame_data)} bytes)")

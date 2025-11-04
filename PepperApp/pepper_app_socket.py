@@ -3,6 +3,8 @@ import threading
 from video_maker_old import make_video_from_frames
 import time
 import os
+import struct
+
 class TCPSocketHandler:
     """
     Responsible for sending commands to Pepper camera service
@@ -126,20 +128,47 @@ class UDPSocketHandler(threading.Thread):
         # If PEPPER_TCP_AUDIO=1, we won't receive audio via UDP; instead, TCPSocketHandler will deliver it.
         tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '1').strip().lower()
         self.use_udp_audio = tcp_audio_flag in ('0', 'false', 'no', 'off')
+        self._frame_header = struct.Struct('!QI')
+        self._last_frame_ts = None
+        self._reset_requested = False
+        try:
+            self._timestamp_reset_threshold = int(os.getenv('PEPPER_TS_RESET_DELTA_US', '1000000000'))
+        except Exception:
+            self._timestamp_reset_threshold = 1000000000
 
     def set_patient_id(self, patient_id: int):
         self.patient_id = patient_id
 
+    def prepare_capture(self, patient_id: int | None = None):
+        if patient_id is not None:
+            self.patient_id = patient_id
+        self.frames = []
+        self.frames_countdown = -1
+        self.audio_bytes = None
+        self.audio_done = False
+        self._frames_zero_at = None
+        self._last_packet_ts = None
+        self._pre_audio_chunks = []
+        self._pre_audio_bytes = 0
+        self._audio_chunks = 0
+        self._audio_bytes_accum = 0
+        self._last_frame_ts = None
+        self._reset_requested = True
+        self.listening = True
 
     def run(self):
         RECV_SIZE = 1400
         self.running = True
-        # Use mutable bytearray instead of immutable bytes
         bytes_received = bytearray()
         receiving_audio = False
         audio_buf = bytearray() 
 
         while self.running:
+            if self._reset_requested:
+                bytes_received.clear()
+                audio_buf.clear()
+                receiving_audio = False
+                self._reset_requested = False
             if not self.listening:
                 time.sleep(0.1)
                 continue
@@ -206,13 +235,9 @@ class UDPSocketHandler(threading.Thread):
                     # finish the partial frame so we don't stall waiting for its END.
                     if bytes_received:
                         # Finalize any partial frame before switching to audio mode
-                        self.frames.append(bytes(bytes_received)) 
-                        bytes_received.clear() # Reset the bytearray
-                        if self.frames_countdown > 0:
-                            self.frames_countdown -= 1
-                            print(f"Frames left: {self.frames_countdown} (forced finalize on AUDIO_START)")
-                            if self.frames_countdown == 0 and self._frames_zero_at is None:
-                                self._frames_zero_at = time.time()
+                        frame_blob = bytes(bytes_received)
+                        bytes_received.clear()
+                        self._handle_frame_blob(frame_blob, suffix=" (forced finalize on AUDIO_START)")
                     receiving_audio = True
                     self._audio_chunks = 0
                     self._audio_bytes_accum = 0
@@ -267,22 +292,13 @@ class UDPSocketHandler(threading.Thread):
                 if data == b"END":
                     # odebrano wszystkie dane z klatki
                     if bytes_received:
-                        self.frames.append(bytes(bytes_received))
+                        frame_blob = bytes(bytes_received)
                         bytes_received.clear()
+                        self._handle_frame_blob(frame_blob, suffix="")
                     else:
                         # Ignore stray END without data (could be due to packet loss or overlap with AUDIO markers)
                         print("Warning: received END without frame data; skipping")
-                    if self.frames_countdown > 0:
-                        self.frames_countdown -= 1
-                        print(f"Frames left: {self.frames_countdown}")
-                        if self.frames_countdown == 0:
-                            self._frames_zero_at = time.time()
-                    elif self.frames_countdown == 0:
-                        # We were already told there are 0 frames left, but we just finished the trailing frame.
-                        # Arm the audio timeout window now if not already set.
-                        if self._frames_zero_at is None:
-                            self._frames_zero_at = time.time()
-                    elif self.frames_countdown < 0:
+                    if self.frames_countdown < 0:
                         # Unknown total; rely on inactivity to detect completion
                         pass
                 else:
@@ -300,6 +316,12 @@ class UDPSocketHandler(threading.Thread):
                 self.audio_bytes = None
                 self.audio_done = False
                 self._frames_zero_at = None
+                self._last_packet_ts = None
+                self._pre_audio_chunks = []
+                self._pre_audio_bytes = 0
+                self._audio_chunks = 0
+                self._audio_bytes_accum = 0
+                self._last_frame_ts = None
 
 
 
@@ -308,3 +330,51 @@ class UDPSocketHandler(threading.Thread):
         self.listening = False
         self.running = False
         self.socket.close()
+
+    def _decode_frame_blob(self, blob):
+        try:
+            if len(blob) >= self._frame_header.size:
+                ts_us, payload_len = self._frame_header.unpack_from(blob)
+                frame_bytes = blob[self._frame_header.size:]
+                if payload_len != len(frame_bytes):
+                    print("Discarding frame: payload size mismatch (expected {} got {})".format(payload_len, len(frame_bytes)))
+                    return None
+                if payload_len <= 0 or payload_len > (3 * 1024 * 1024):
+                    print("Discarding frame: unreasonable payload length {}".format(payload_len))
+                    return None
+                if ts_us < 0 or ts_us > 10**15:
+                    print("Discarding frame: timestamp {} outside expected range".format(ts_us))
+                    return None
+                if self._last_frame_ts is None:
+                    self._last_frame_ts = ts_us
+                    return (ts_us, frame_bytes)
+                if ts_us > self._last_frame_ts:
+                    self._last_frame_ts = ts_us
+                    return (ts_us, frame_bytes)
+                delta_back = self._last_frame_ts - ts_us
+                if delta_back > self._timestamp_reset_threshold:
+                    print("Timestamp jump backwards by {} us; resetting baseline.".format(delta_back))
+                    self._last_frame_ts = ts_us
+                    return (ts_us, frame_bytes)
+                print("Dropping out-of-order frame with timestamp {} (last {})".format(ts_us, self._last_frame_ts))
+                return None
+            else:
+                print("Frame blob too small for header ({} bytes); treating as legacy frame".format(len(blob)))
+        except struct.error as exc:
+            print("Failed to unpack frame header: {}".format(exc))
+        # Legacy support: no timestamp header
+        return (None, blob)
+
+    def _handle_frame_blob(self, blob, suffix=""):
+        frame_entry = self._decode_frame_blob(blob)
+        if frame_entry is not None:
+            self.frames.append(frame_entry)
+            if self.frames_countdown > 0:
+                self.frames_countdown -= 1
+                print(f"Frames left: {self.frames_countdown}{suffix}")
+                if self.frames_countdown == 0 and self._frames_zero_at is None:
+                    self._frames_zero_at = time.time()
+            elif self.frames_countdown == 0 and self._frames_zero_at is None:
+                self._frames_zero_at = time.time()
+        return frame_entry is not None
+

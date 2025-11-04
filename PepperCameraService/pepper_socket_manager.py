@@ -1,6 +1,7 @@
 import socket
 import threading
 import os
+import struct
 
 class PepperSocketManager():
     def __init__(self, host, port_tcp, port_udp, pepper_camera):
@@ -171,12 +172,15 @@ class PepperSocketManager():
         '''
         print("sending frame")
         CHUNK_SIZE = 1400
+        timestamp_us, payload = frame
+        header = struct.pack('!QI', int(timestamp_us), len(payload))
+        frame_packet = header + payload
 
-        for start in range(0, len(frame), CHUNK_SIZE):
+        for start in range(0, len(frame_packet), CHUNK_SIZE):
             end = start + CHUNK_SIZE
-            if end > len(frame):
-                end = len(frame)
-            chunk = frame[start:end]
+            if end > len(frame_packet):
+                end = len(frame_packet)
+            chunk = frame_packet[start:end]
             self.socket_udp.sendto(chunk, self.target_udp)
 
         self.socket_udp.sendto(b"END", self.target_udp)

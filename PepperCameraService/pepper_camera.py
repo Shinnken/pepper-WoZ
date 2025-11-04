@@ -41,7 +41,8 @@ class PepperCamera(object):
         self.session = qi.Session()
         self.session.connect("tcp://127.0.0.1:9559")
         self.session.service("ALTextToSpeech").setLanguage("Polish")
-        # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)  # Disable basic awareness to prevent interruptions
+        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)  # Disable basic awareness to prevent interruptions
+        self.session.service("ALMotion").wakeUp()
         self.delete_subs("kamera")
         self.vid_handle = self.session.service("ALVideoDevice").subscribeCamera(
             "kamera",
