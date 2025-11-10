@@ -21,3 +21,6 @@ Communication is handled via:
 
 -   **TCP**: For reliable transmission of commands (e.g., start/stop recording, speak) and status messages.
 -   **UDP**: For low-latency streaming of video and audio data.
+
+
+pyinstaller --noconfirm --onedir --windowed --add-data "/Users/a/Documents/nao_test/.venv/lib/python3.12/site-packages/customtkinter:customtkinter" --add-data "/Users/a/Documents/nao_test/pepper-WoZ/PepperApp/button_layout_template.tsv:data/" --icon "/Users/a/Documents/nao_test/pepper-WoZ/icon.icns" "/Users/a/Documents/nao_test/pepper-WoZ/PepperApppepper_app.py"
