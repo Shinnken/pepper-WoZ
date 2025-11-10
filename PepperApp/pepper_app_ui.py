@@ -124,7 +124,7 @@ class App(customtkinter.CTk):
 
         # removed legacy dialogue_options/scrollable_frame setup in favor of new layout
 
-        self.button_template_path = os.path.join(os.path.dirname(__file__), "button_layout_template_0.tsv")
+        self.button_template_path = os.path.join(os.path.dirname(__file__), "button_layout_template.tsv")
         self.button_definitions, available_sets = self._load_button_definitions(self.button_template_path)
         self._available_button_sets = tuple(available_sets)
         self._available_button_sets_set = set(self._available_button_sets)
