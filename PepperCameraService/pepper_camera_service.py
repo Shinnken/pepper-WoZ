@@ -16,6 +16,10 @@ if __name__ == "__main__":
         pepper_camera = PepperCamera()
         print("Connecting to Pepper Socket...")
         pepper_socket_manager = PepperSocketManager(args.host, args.port_tcp, args.port_udp, pepper_camera)
+        print("Pepper Camera Client is running.")
+        pepper_camera.wez_usiadz()
+        print("Robot is seated.")
+        
     except Exception as e:
         print("Error:", e)
         if pepper_socket_manager:

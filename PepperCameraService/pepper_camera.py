@@ -42,7 +42,6 @@ class PepperCamera(object):
         self.session.connect("tcp://127.0.0.1:9559")
         self.session.service("ALTextToSpeech").setLanguage("Polish")
         self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)  # Disable basic awareness to prevent interruptions
-        self.session.service("ALMotion").wakeUp()
         self.delete_subs("kamera")
         self.vid_handle = self.session.service("ALVideoDevice").subscribeCamera(
             "kamera",
@@ -71,6 +70,12 @@ class PepperCamera(object):
             self.session.service("ALVideoDevice").unsubscribe(sub)
 
     def start_recording(self):
+        self.session.service("ALMotion").wakeUp()
+        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
+        #ListeningMovement
+        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
+        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
+        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 1.0)
         if not self.pepper_camera_recorder:
             self.pepper_camera_recorder = PepperCameraRecorder(self.session, self.vid_handle, self.frames)
             self.pepper_camera_recorder.is_recording = True
@@ -114,6 +119,10 @@ class PepperCamera(object):
     def wez_powiedz(self, message):
         self.session.service("ALAnimatedSpeech").say(message)
         print("said: ", message)
+
+    def wez_usiadz(self):
+        self.session.service("ALRobotPosture").goToPosture("Sit", 1.0)
+
 
 
 class PepperCameraRecorder(threading.Thread):

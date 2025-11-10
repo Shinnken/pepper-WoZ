@@ -17,6 +17,20 @@ class App(customtkinter.CTk):
         self.socket_manager = socket_manager
         self.ssh_manager = None
 
+        # Adjust this to change the font size of the Say textbox
+        self.say_textbox_font_size = 18
+        self.say_textbox_font = customtkinter.CTkFont(size=self.say_textbox_font_size)
+        # Set to False when you want the Say textbox to be read-only from the keyboard
+        self.say_textbox_allow_typing = False
+        self._say_textbox_current_state = "normal"
+
+        # Adjust these to change the height of buttons generated from TSV definitions
+        self.template_button_height_left = 60
+        self.template_button_height_right = 30
+        # Adjust this to change the font size used by all buttons
+        self.button_font_size = 18
+        self.button_font = customtkinter.CTkFont(size=self.button_font_size)
+
         # configure window
         self.title("Pepper App")
         self.geometry(f"{1100}x{580}")
@@ -41,13 +55,15 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(1, weight=0)
         self.grid_columnconfigure(2, weight=1)
         self.grid_columnconfigure(3, weight=1)
+        self.grid_columnconfigure(4, weight=1)
+        self.grid_columnconfigure(5, weight=1)
 
         # create IP input and connect button
         # self.ip_entry = customtkinter.CTkEntry(self, placeholder_text="Enter IP")
         self.ip_entry = customtkinter.CTkEntry(self)
         self.ip_entry.insert(0, "192.168.1.102")
         self.ip_entry.grid(row=0, column=0, padx=20, pady=20, sticky="w")
-        self.connect_button = customtkinter.CTkButton(self, text="Connect")
+        self.connect_button = customtkinter.CTkButton(self, text="Połącz z Robotem", font=self.button_font)
         self.connect_button.grid(row=0, column=1, padx=20, pady=20, sticky="w")
         self._initialize_button_colors(self.connect_button)
 
@@ -57,6 +73,22 @@ class App(customtkinter.CTk):
         self.id_entry = customtkinter.CTkEntry(self, width=150)
         self.id_entry.grid(row=0, column=3, padx=(5, 20), pady=20, sticky="w")
 
+        self.id_mode = "GRUPA KONTROLNA"
+        self._id_mode_to_set = {
+            "GRUPA KONTROLNA": "kontrolna",
+            "GRUPA EKSPERYMENTALNA": "badawcza",
+        }
+        self.id_mode_button = customtkinter.CTkButton(
+            self,
+            text=self.id_mode,
+            width=300,
+            height=60,
+            command=self.toggle_id_mode,
+            font=self.button_font,
+        )
+        self.id_mode_button.grid(row=0, column=4, padx=(0, 20), pady=20, sticky="w")
+        self._initialize_button_colors(self.id_mode_button)
+
         # create record/stop toggle button and loading bar
         self.record_toggle_button = customtkinter.CTkButton(
             self, 
@@ -65,24 +97,44 @@ class App(customtkinter.CTk):
             hover_color="#006400",  # Dark green for hover
             width=400,  # Increased width
             height=60,  # Scalable height
-            command=self.toggle_recording
+            command=self.toggle_recording,
+            font=self.button_font,
         )
-        self.record_toggle_button.grid(row=0, column=4, padx=20, pady=20, sticky="ew")  # Moved to a new column
+        self.record_toggle_button.grid(row=0, column=5, padx=20, pady=20, sticky="ew")  # Moved to a new column
         self._initialize_button_colors(self.record_toggle_button)
         self.loading_bar = customtkinter.CTkProgressBar(self, progress_color="#a60d02")
-        self.loading_bar.grid(row=1, column=2, columnspan=3, padx=20, pady=10, sticky="ew")  # Adjusted columnspan
+        self.loading_bar.grid(row=1, column=2, columnspan=4, padx=20, pady=10, sticky="ew")  # Stretch under controls
 
         # create large textbox and say button
-        self.large_textbox = customtkinter.CTkTextbox(self, width=300, height=100)
+        self.large_textbox = customtkinter.CTkTextbox(
+            self,
+            width=300,
+            height=100,
+            font=self.say_textbox_font,
+        )
         self.large_textbox.grid(row=2, column=0, columnspan=2, padx=20, pady=(20, 10), sticky="nsew")
-        self.say_button = customtkinter.CTkButton(self, text="Say", width=120, height=40)
+        self._apply_say_textbox_editable_state()
+        self.large_textbox.bind("<Return>", self._handle_say_textbox_enter, add="+")
+        self.large_textbox.bind("<KP_Enter>", self._handle_say_textbox_enter, add="+")
+        self.say_button = customtkinter.CTkButton(self, text="Say", width=120, height=40, font=self.button_font)
         self.say_button.grid(row=3, column=0, columnspan=2, padx=20, pady=(0, 20), sticky="ew")
         self._initialize_button_colors(self.say_button)
+        self.say_button.bind("<Return>", self._handle_say_button_enter, add="+")
+        self.say_button.bind("<KP_Enter>", self._handle_say_button_enter, add="+")
 
         # removed legacy dialogue_options/scrollable_frame setup in favor of new layout
 
-        self.button_template_path = os.path.join(os.path.dirname(__file__), "button_layout_template_3.tsv")
-        self.button_definitions = self._load_button_definitions(self.button_template_path)
+        self.button_template_path = os.path.join(os.path.dirname(__file__), "button_layout_template_0.tsv")
+        self.button_definitions, available_sets = self._load_button_definitions(self.button_template_path)
+        self._available_button_sets = tuple(available_sets)
+        self._available_button_sets_set = set(self._available_button_sets)
+        initial_set = (self._id_mode_to_set.get(self.id_mode, "") or "").strip().lower()
+        if initial_set and initial_set in self._available_button_sets_set:
+            self._default_template_set = initial_set
+        elif self._available_button_sets:
+            self._default_template_set = self._available_button_sets[0]
+        else:
+            self._default_template_set = "default"
         self._active_scroll_canvas = None
         self._used_button_fg_color = ("#f9cb4d", "#a87b0f")
         self._used_button_hover_color = ("#f0b928", "#8f670d")
@@ -96,18 +148,18 @@ class App(customtkinter.CTk):
         self._set_button_state(self.say_button, "disabled")
 
         self.dialogue_container = customtkinter.CTkFrame(self)
-        self.dialogue_container.grid(row=2, column=2, columnspan=3, padx=20, pady=20, sticky="nsew")
-        self.dialogue_container.grid_columnconfigure(0, weight=3, uniform="dialogue_columns")
-        self.dialogue_container.grid_columnconfigure(1, weight=1, uniform="dialogue_columns")
+        self.dialogue_container.grid(row=2, column=2, columnspan=4, padx=20, pady=20, sticky="nsew")
+        self.dialogue_container.grid_columnconfigure(0, weight=2)
+        self.dialogue_container.grid_columnconfigure(1, weight=1)
         self.dialogue_container.grid_rowconfigure(1, weight=1)
 
         toggle_frame = customtkinter.CTkFrame(self.dialogue_container)
         toggle_frame.grid(row=0, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
         toggle_frame.grid_columnconfigure((0, 1), weight=1)
 
-        self.wstep_button = customtkinter.CTkButton(toggle_frame, text="Wstęp + Zakończenie", command=self.show_start_frame)
+        self.wstep_button = customtkinter.CTkButton(toggle_frame, text="Wstęp + Zakończenie", command=self.show_start_frame, font=self.button_font)
         self.wstep_button.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
-        self.dylematy_button = customtkinter.CTkButton(toggle_frame, text="Dylematy ", command=self.show_problems_frame)
+        self.dylematy_button = customtkinter.CTkButton(toggle_frame, text="Dylematy ", command=self.show_problems_frame, font=self.button_font)
         self.dylematy_button.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         self._initialize_button_colors(self.wstep_button)
         self._initialize_button_colors(self.dylematy_button)
@@ -117,11 +169,16 @@ class App(customtkinter.CTk):
         self.left_container.grid_rowconfigure(0, weight=1)
         self.left_container.grid_columnconfigure(0, weight=1)
 
-        self.start_frame = customtkinter.CTkScrollableFrame(self.left_container)
+        self.start_frame_container = customtkinter.CTkFrame(self.left_container)
+        self.start_frame_container.grid(row=0, column=0, sticky="nsew")
+        self.start_frame_container.grid_rowconfigure(0, weight=1)
+        self.start_frame_container.grid_columnconfigure(0, weight=1)
+
+        self.start_frame = customtkinter.CTkScrollableFrame(self.start_frame_container)
         self.start_frame.grid(row=0, column=0, sticky="nsew")
         self._register_scrollable_frame(self.start_frame)
         start_buttons = self.button_definitions.get("start", {}).get("default", [])
-        self._populate_button_list(self.start_frame, start_buttons)
+        self._populate_button_list(self.start_frame, start_buttons, button_height=self.template_button_height_left)
 
         self.problems_frame = customtkinter.CTkFrame(self.left_container)
         self.problems_frame.grid(row=0, column=0, sticky="nsew")
@@ -149,7 +206,8 @@ class App(customtkinter.CTk):
             toggle_button = customtkinter.CTkButton(
                 self.problem_toggle_container,
                 text=key_text,
-                command=lambda idx=index: self.show_problem_subframe(idx)
+                command=lambda idx=index: self.show_problem_subframe(idx),
+                font=self.button_font,
             )
             toggle_button.grid(row=0, column=index, padx=5, sticky="ew")
             self.problem_toggle_container.grid_columnconfigure(index, weight=1)
@@ -159,7 +217,7 @@ class App(customtkinter.CTk):
             subframe = customtkinter.CTkScrollableFrame(self.problem_frames_container)
             subframe.grid(row=0, column=0, sticky="nsew")
             self._register_scrollable_frame(subframe)
-            self._populate_button_list(subframe, button_defs)
+            self._populate_button_list(subframe, button_defs, button_height=self.template_button_height_left)
             subframe.grid_remove()
 
             self.problem_subframes[key_text] = subframe
@@ -180,13 +238,13 @@ class App(customtkinter.CTk):
 
         for row_index, (group_name, button_defs) in enumerate(right_items):
             group_label = str(group_name)
-            if(group_label == "affirmation" or group_label == "silence" or group_label == "off_topic"):
+            if(group_label in {"affirmation", "silence", "off_topic", "misc"}):
                 group_frame = customtkinter.CTkFrame(self.right_scroll_frame)
             else:
                 group_frame = customtkinter.CTkScrollableFrame(self.right_scroll_frame, label_text=group_label)
             group_frame.grid(row=row_index, column=0, padx=5, pady=(0, 10), sticky="ew")
-            self._populate_button_list(group_frame, button_defs)
-            if(group_label == "affirmation" or group_label == "silence" or group_label == "off_topic"):
+            self._populate_button_list(group_frame, button_defs, button_height=self.template_button_height_right)
+            if(group_label in {"affirmation", "silence", "off_topic", "misc"}):
                 continue
             self._register_scrollable_frame(group_frame)
 
@@ -196,6 +254,7 @@ class App(customtkinter.CTk):
 
         self.loading_bar.set(0)
         self.show_start_frame()
+        self.after(0, self._equalize_left_panel_width)
 
 
 
@@ -219,7 +278,7 @@ class App(customtkinter.CTk):
             # --- BLOCK 2 ---
             # Note: deploy_remote needs to be thread-safe
             # Assuming it's a blocking function (like subprocess.run)
-            # deploy_remote(ip_value) 
+            deploy_remote(ip_value) 
             
             # --- BLOCK 3 ---
             try:
@@ -336,8 +395,7 @@ class App(customtkinter.CTk):
 
 
     def text_button_event(self, text):
-        self.large_textbox.delete("0.0", "end")
-        self.large_textbox.insert("0.0", text)
+        self._set_large_textbox_content(text)
 
     def say_text(self):
         text = self.large_textbox.get("0.0", "end")
@@ -369,21 +427,34 @@ class App(customtkinter.CTk):
             self.loading_bar.configure(mode="determinate")
             self.loading_bar.set(1)
 
+    def toggle_id_mode(self):
+        """Flip the patient mode between control and exam labels."""
+        self.id_mode = "GRUPA EKSPERYMENTALNA" if self.id_mode == "GRUPA KONTROLNA" else "GRUPA KONTROLNA"
+        self.id_mode_button.configure(text=self.id_mode)
+        self._default_template_set = self._current_template_set_key()
+
     def _load_button_definitions(self, template_path: str):
         definitions = {
             "start": {"default": []},
             "problems": {},
             "right": {}
         }
+        available_sets = set()
+        entry_lookup = {}
+        sequence_counter = 0
 
         if not os.path.exists(template_path):
-            return definitions
-
-        entry_index = 0
+            if not available_sets:
+                available_sets.add("default")
+            return definitions, tuple(sorted(available_sets))
 
         with open(template_path, "r", newline="", encoding="utf-8") as file:
             reader = csv.DictReader(file, delimiter="\t")
             for row in reader:
+                raw_set = (row.get("set") or "").strip()
+                normalized_set = raw_set.lower() if raw_set else "default"
+                available_sets.add(normalized_set)
+
                 section = (row.get("section") or "").strip().lower()
                 group = (row.get("group") or "").strip()
                 label = (row.get("label") or "").strip()
@@ -406,30 +477,61 @@ class App(customtkinter.CTk):
                 except ValueError:
                     order_value = None
 
-                entry_index += 1
-                entry = {"label": label, "value": value, "sequence": entry_index}
-                if order_value is not None:
-                    entry["order"] = order_value
+                section_key = None
+                target_group = None
 
                 if section == "start":
-                    bucket = definitions.setdefault("start", {})
+                    section_key = "start"
                     target_group = group or "default"
-                    bucket.setdefault(target_group, []).append(entry)
                 elif section in {"problem", "problems"}:
-                    bucket = definitions.setdefault("problems", {})
+                    section_key = "problems"
                     target_group = group or "1"
-                    bucket.setdefault(target_group, []).append(entry)
                 elif section in {"right", "response"}:
-                    bucket = definitions.setdefault("right", {})
+                    section_key = "right"
                     target_group = group or "misc"
-                    bucket.setdefault(target_group, []).append(entry)
+                else:
+                    continue
+
+                bucket = definitions.setdefault(section_key, {})
+                items = bucket.setdefault(target_group, [])
+                entry_key = (section_key, target_group, label)
+                entry = entry_lookup.get(entry_key)
+
+                if entry is None:
+                    sequence_counter += 1
+                    entry = {
+                        "label": label,
+                        "sequence": sequence_counter,
+                        "values": {}
+                    }
+                    if order_value is not None:
+                        entry["order"] = order_value
+                    entry["value"] = value
+                    items.append(entry)
+                    entry_lookup[entry_key] = entry
+                else:
+                    if order_value is not None and entry.get("order") is None:
+                        entry["order"] = order_value
+
+                entry["values"][normalized_set] = value
 
         definitions.setdefault("start", {}).setdefault("default", [])
         definitions.setdefault("problems", {})
         definitions.setdefault("right", {})
-        return definitions
 
-    def _populate_button_list(self, container, button_defs):
+        if not available_sets:
+            available_sets.add("default")
+
+        ordered_sets = list(available_sets)
+        if "default" in available_sets:
+            ordered_sets.sort()
+            ordered_sets.insert(0, ordered_sets.pop(ordered_sets.index("default")))
+        else:
+            ordered_sets.sort()
+
+        return definitions, tuple(ordered_sets)
+
+    def _populate_button_list(self, container, button_defs, button_height=None):
         container.grid_columnconfigure(0, weight=1)
 
         if not button_defs:
@@ -446,15 +548,21 @@ class App(customtkinter.CTk):
             )
         )
 
+        resolved_height = button_height
+        if resolved_height is None:
+            resolved_height = getattr(self, "template_button_height_left", None)
+
         for row_index, definition in enumerate(sorted_definitions):
             label = definition.get("label", "")
-            value = definition.get("value", label)
-            button = customtkinter.CTkButton(
-                container,
-                text=label
-            )
+            button_kwargs = {"text": label}
+            if resolved_height:
+                button_kwargs["height"] = resolved_height
+            button_font = getattr(self, "button_font", None)
+            if button_font is not None:
+                button_kwargs["font"] = button_font
+            button = customtkinter.CTkButton(container, **button_kwargs)
             self._initialize_button_colors(button)
-            button.configure(command=lambda payload=value, btn=button: self._handle_template_button_click(btn, payload))
+            button.configure(command=lambda entry=definition, btn=button: self._handle_template_button_click(btn, entry))
             button.grid(row=row_index, column=0, padx=5, pady=5, sticky="ew")
 
     def _register_scrollable_frame(self, scroll_frame):
@@ -502,10 +610,157 @@ class App(customtkinter.CTk):
             canvas.yview_scroll(delta, "units")
             return "break"
 
-    def _handle_template_button_click(self, button, payload):
+    def _handle_template_button_click(self, button, entry):
+        payload = self._resolve_entry_value(entry)
         self.text_button_event(payload)
         button._active_override_colors = (self._used_button_fg_color, self._used_button_hover_color)
         button.configure(fg_color=self._used_button_fg_color, hover_color=self._used_button_hover_color)
+
+    def _current_template_set_key(self):
+        mapped = (self._id_mode_to_set.get(self.id_mode, "") or "").strip().lower()
+        if mapped and mapped in self._available_button_sets_set:
+            return mapped
+        if mapped and mapped in self._available_button_sets:
+            return mapped
+        derived = (self.id_mode or "").strip().lower()
+        if derived and derived in self._available_button_sets_set:
+            return derived
+        if derived and derived in self._available_button_sets:
+            return derived
+        if self._default_template_set:
+            return self._default_template_set
+        if self._available_button_sets:
+            return self._available_button_sets[0]
+        return "default"
+
+    def _resolve_entry_value(self, entry):
+        values = entry.get("values") or {}
+        active_set = self._current_template_set_key()
+
+        if active_set in values:
+            return values[active_set]
+
+        if self._default_template_set and self._default_template_set in values:
+            return values[self._default_template_set]
+
+        for fallback in values.values():
+            return fallback
+
+        return entry.get("label", "")
+
+    def _equalize_left_panel_width(self):
+        try:
+            self.update_idletasks()
+        except tkinter.TclError:
+            return
+
+        start_width = 0
+        problems_width = 0
+
+        if hasattr(self, "start_frame_container"):
+            try:
+                start_width = self.start_frame_container.winfo_reqwidth()
+            except tkinter.TclError:
+                start_width = 0
+
+        if hasattr(self, "problems_frame"):
+            try:
+                problems_width = self.problems_frame.winfo_reqwidth()
+            except tkinter.TclError:
+                problems_width = 0
+
+        target_width = max(start_width, problems_width)
+        if target_width <= 0:
+            return
+
+        self.dialogue_container.grid_columnconfigure(0, minsize=target_width)
+
+    def _apply_say_textbox_editable_state(self):
+        textbox = getattr(self, "large_textbox", None)
+        if textbox is None:
+            return
+
+        allow_typing = getattr(self, "say_textbox_allow_typing", True)
+        target_state = "normal" if allow_typing else "disabled"
+
+        try:
+            textbox.configure(state=target_state)
+        except tkinter.TclError:
+            self._say_textbox_current_state = "normal"
+            return
+
+        self._say_textbox_current_state = target_state
+
+    def set_say_textbox_allow_typing(self, allow_typing: bool):
+        """Convenience helper to toggle keyboard editing at runtime."""
+        self.say_textbox_allow_typing = bool(allow_typing)
+        self._apply_say_textbox_editable_state()
+
+    def set_button_font_size(self, size):
+        """Update the shared button font and remember the new size."""
+        try:
+            resolved_size = max(1, int(size))
+        except (TypeError, ValueError):
+            return
+
+        self.button_font_size = resolved_size
+
+        button_font = getattr(self, "button_font", None)
+        if button_font is None:
+            self.button_font = customtkinter.CTkFont(size=resolved_size)
+        else:
+            try:
+                button_font.configure(size=resolved_size)
+            except tkinter.TclError:
+                self.button_font = customtkinter.CTkFont(size=resolved_size)
+
+    def _set_large_textbox_content(self, text):
+        textbox = getattr(self, "large_textbox", None)
+        if textbox is None:
+            return
+
+        previous_state = getattr(self, "_say_textbox_current_state", "normal")
+        temporary_unlock = previous_state == "disabled"
+
+        if temporary_unlock:
+            try:
+                textbox.configure(state="normal")
+            except tkinter.TclError:
+                temporary_unlock = False
+            else:
+                self._say_textbox_current_state = "normal"
+
+        try:
+            textbox.delete("0.0", "end")
+            textbox.insert("0.0", text)
+        finally:
+            if temporary_unlock:
+                try:
+                    textbox.configure(state="disabled")
+                except tkinter.TclError:
+                    self._say_textbox_current_state = "normal"
+                else:
+                    self._say_textbox_current_state = "disabled"
+
+    def _handle_say_textbox_enter(self, event):
+        """Trigger Say when Return is pressed inside the textbox."""
+        modifiers = getattr(event, "state", 0)
+        if modifiers & (1 | 4 | 8):  # ignore Shift/Ctrl/Alt+Enter to keep newlines available
+            return None
+
+        if getattr(self.say_button, "cget", None) and self.say_button.cget("state") == "disabled":
+            return "break"
+
+        self.say_text()
+        return "break"
+
+    def _handle_say_button_enter(self, _event):
+        """Allow pressing Enter on the Say button itself."""
+        if getattr(self.say_button, "cget", None) and self.say_button.cget("state") == "disabled":
+            return "break"
+
+        self.say_text()
+        return "break"
 
     def _initialize_button_colors(self, button):
         if button is None:
@@ -578,16 +833,18 @@ class App(customtkinter.CTk):
 
     def show_start_frame(self):
         self.problems_frame.grid_remove()
-        self.start_frame.grid()
+        self.start_frame_container.grid()
         self._set_button_state(self.wstep_button, "disabled")
         self._set_button_state(self.dylematy_button, "normal")
+        self._equalize_left_panel_width()
 
     def show_problems_frame(self):
-        self.start_frame.grid_remove()
+        self.start_frame_container.grid_remove()
         self.problems_frame.grid()
         self.show_problem_subframe(self.active_problem_index)
         self._set_button_state(self.dylematy_button, "disabled")
         self._set_button_state(self.wstep_button, "normal")
+        self._equalize_left_panel_width()
 
     def close_app(self):
         self.socket_manager.handle_command("exit")

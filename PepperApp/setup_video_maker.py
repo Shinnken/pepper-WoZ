@@ -69,8 +69,8 @@ ext_modules = [
 setup(
     name='video_maker_cpp',
     version='0.1.0',
-    author='Your Name',
-    author_email='your.email@example.com',
+    author='Shinken',
+    author_email='konrad.suchodolski50@gmail.com',
     description='C++ accelerator for video making',
     ext_modules=ext_modules,
     install_requires=['pybind11>=2.6'],
