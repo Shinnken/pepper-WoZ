@@ -10,7 +10,6 @@ class DrawApp(ctk.CTk):
         super().__init__()
         self.title("Osoba zaczynająca")
         self.geometry("1000x960")
-        self.resizable(False, False)
 
         self.loading = False
         self.loading_angle = 0
