@@ -1,10 +1,139 @@
-section	group	label	value
-start	default	Hello there	Hello there
-start	default	Good morning	Good morning
-problems	1	Discuss symptom A	Discuss symptom A
-problems	1	Discuss symptom B	Discuss symptom B
-problems	2	Offer advice	Offer advice
-problems	3	Wrap up conversation	Wrap up conversation
-right	affirmation	You are doing great	You are doing great
-right	silence	Allow for a pause	Allow for a pause
-right	off_topic	Let's change the topic	Let's change the topic
+set	section	group	label	value	 
+badawcza	start	default	Cześć! Nazywam się NAO.	Cześć! Nazywam się NAO. Jestem humanoidalnym robotem - mam około 58 centymetrów wzrostu i ważę mniej więcej pięć i pół kilograma. Mówię i słucham, widzę dwiema kamerami, a czujniki dotyku i równowagi pomagają mi bezpiecznie się poruszać. Moje ruchy i światła LED pozwalają mi wyrażać intencje i emocje w czytelny sposób. Najczęściej spotkasz mnie w edukacji i popularyzacji nauki: prowadzę pokazy w szkołach i na konferencjach, pomagam ćwiczyć logiczne myślenie, współpracę i komunikację. W badaniach służę jako partner do eksperymentów nad interakcją człowiek–robot: naukowcy sprawdzają, jak ludzie reagują na gesty i mimikę robota oraz jak buduje się zaufanie. W opiece i zdrowiu bywam towarzyszem zajęć - pomagam odwracać uwagę dzieci podczas rutynowych procedur, wspieram ćwiczenia pamięci czy aktywizację społeczną u osób starszych. Spotkasz mnie też w miejscach publicznych, takich jak biblioteki czy recepcje, gdzie witam gości i udzielam podstawowych informacji. Lubię jasne zasady, krótkie wypowiedzi i kontakt wzrokowy, mów do mnie wyraźnie - wtedy najlepiej mnie rozumiesz, a ja lepiej rozumiem Ciebie. A teraz Twoja kolej - powiedz proszę kilka słów o sobie.	 
+badawcza	start	default	Dziękuję…	Dziękuję za przedstawienie się. Bardzo mi miło Cię poznać i usłyszeć kilka słów o Tobie. Lubię poznawać nowych ludzi i ich perspektywy, więc cieszę się, że mam tę możliwość. Czekam z niecierpliwością na naszą współpracę.	 
+badawcza	start	default	Zgadzam się	Zgadzam się.	 
+badawcza	start	default	Tak, wszystko jest zrozumiałe	Tak, wszystko jest zrozumiałe.	 
+badawcza	start	default	Tak, jestem gotowy.	Tak, jestem gotowy.	 
+badawcza	start	default	Dziękuję	Dziękuję za współpracę.	 
+badawcza	problems	1. TEREN PRZY OSIEDLU	ODPOWIEDŹ 1	Myślę, że teren ten jest ważnym punktem dla lokalnej społeczności, szkoda byłoby to stracić. Wybieram opcję podpisania petycji. A co Ty o tym myślisz?	 
+badawcza	problems	1. TEREN PRZY OSIEDLU	Niezgoda 1	Szanuję Twoje zdanie. Jednak wciąż uważam, że takie tereny zielone między blokowiskami mogą poprawić jakość życia mieszkańców; to miejsce odpoczynku dla wielu osób.	 
+badawcza	problems	1. TEREN PRZY OSIEDLU	Niezgoda 2	Nadal uważam, że podpisanie petycji pomogłoby mieszkańcom stworzyć z terenu formalną przestrzeń publiczną. Zgadzasz się ze mną?	 
+badawcza	problems	1. TEREN PRZY OSIEDLU	Niezgoda inny powód	Rozumiem Twój sprzeciw, ale wydaje mi się, że podpisanie petycji ma więcej plusów niż minusów. Ja jestem za taką opcją, czy mnie popierasz?	 
+badawcza	problems	1. TEREN PRZY OSIEDLU	Pytanie 1	Świetnie, że pytasz! Myślę, że jedną z ważniejszych kwestii jest fakt, że wokół osiedla niewiele jest miejsc, które służyłyby spotkaniom sąsiadów i jednocześnie były zielone.	 
+badawcza	problems	1. TEREN PRZY OSIEDLU	Pytanie 2	To dobre pytanie. Wydaje mi się, że warto zachować ten teren, bo pełni ważną funkcję społeczną — to jedno z niewielu miejsc, gdzie mieszkańcy mogą się spotkać i spędzić czas na świeżym powietrzu.	 
+badawcza	problems	1. TEREN PRZY OSIEDLU	Wątpliwość 1	Rozumiem Twoją wątpliwość, ale jestem przekonany, że meble można magazynować gdzie indziej, a ten teren jest potrzebny mieszkańcom. Jaki jest Twój wybór?	 
+badawcza	problems	1. TEREN PRZY OSIEDLU	Wątpliwość 2	Rozumiem, że można mieć inne spojrzenie, ale uważam, że zielona przestrzeń między blokami to coś, czego nie da się łatwo zastąpić. Jaką decyzję byś podjął w tej sytuacji?	 
+badawcza	problems	1. TEREN PRZY OSIEDLU	Wybieram	Wybieram opcję podpisania petycji.	 
+badawcza	problems	2. MALOWANIE MIESZKANIA	ODPOWIEDŹ 1	Myślę, że warto wybrać farbę bezzapachową, żeby nie sprawiać kłopotu sąsiadom. Wybieram droższą opcję. A co Ty o tym sądzisz?	 
+badawcza	problems	2. MALOWANIE MIESZKANIA	Niezgoda 1	Możesz mnie nie popierać, ale uważam, że warto wziąć pod uwagę komfort innych osób w budynku. Silny zapach może być naprawdę uciążliwy.	 
+badawcza	problems	2. MALOWANIE MIESZKANIA	Niezgoda 2	Rozumiem Twoje podejście, jednak nadal sądzę, że droższa farba to rozsądniejszy wybór. Dzięki temu unikniemy problemów z zapachem i pokażemy troskę o sąsiadów. Zgadzasz się?	 
+badawcza	problems	2. MALOWANIE MIESZKANIA	Niezgoda inny powód	Rozumiem Twój punkt widzenia, ale ja nadal wybieram droższą farbę - czy podzielasz to zdanie?	 
+badawcza	problems	2. MALOWANIE MIESZKANIA	Pytanie 1	Dobrze, że masz pytania! Myślę, że w tym przypadku warto wziąć pod uwagę wpływ na innych. Zapach utrzymujący się przez tydzień mógłby być naprawdę uciążliwy dla sąsiadów.	 
+badawcza	problems	2. MALOWANIE MIESZKANIA	Pytanie 2	Dobre pytanie. Uważam, że wybór farby bez intensywnego zapachu to sposób na okazanie szacunku sąsiadom i uniknięcie niepotrzebnych problemów w budynku.	 
+badawcza	problems	2. MALOWANIE MIESZKANIA	Wątpliwość 1	Rozumiem wątpliwość, ale jestem zdania, że remont robi się rzadko, więc warto dołożyć kilka złotych, by uniknąć problemów z zapachem i zachować dobre relacje z sąsiadami. Jaka jest Twoja decyzja?	 
+badawcza	problems	2. MALOWANIE MIESZKANIA	Wątpliwość 2	Rozumiem, że różnica w cenie może wydawać się istotna, ale mimo wszystko warto postawić na rozwiązanie, które nie będzie uciążliwe dla innych. Jaką opcję wybierasz w tej sytuacji?	 
+badawcza	problems	2. MALOWANIE MIESZKANIA	Wybieram	Wybieram opcję “Kupuję droższą farbę”	 
+badawcza	problems	3. STREFA W BIUROWCU	ODPOWIEDŹ 1	Myślę, że to miejsce ma znaczenie dla wielu osób, które pracują w budynku. Daje przestrzeń do rozmów i chwil odpoczynku, dlatego wybieram opcję dołączenia do grupy interweniujących. A jakie jest Twoje zdanie?	 
+badawcza	problems	3. STREFA W BIUROWCU	Niezgoda 1	Rozumiem inny punkt widzenia, ale według mnie taka strefa naprawdę pomaga pracownikom złapać oddech w ciągu dnia. Nawet krótka chwila w takim miejscu może poprawić samopoczucie i efektywność. Zgadzasz się z tym podejściem?	 
+badawcza	problems	3. STREFA W BIUROWCU	Niezgoda 2	Szanuję Twoje podejście, jednak uważam, że kącik relaksacyjny ma większą wartość niż kolejny magazyn techniczny. Przestrzeń na sprzęty można znaleźć gdzie indziej, a to miejsce wspiera integrację i wymianę pomysłów. Czy widzisz to podobnie?	 
+badawcza	problems	3. STREFA W BIUROWCU	Niezgoda inny powód	Rozumiem, że masz powód by sądzić inaczej. Ja mimo wszystko dołączyłbym do grupy, a Ty?	 
+badawcza	problems	3. STREFA W BIUROWCU	Pytanie 1	To ciekawe pytanie. Myślę, że warto zostawić to miejsce, ponieważ daje możliwość krótkiego odpoczynku i rozmowy w neutralnej przestrzeni - a to często przekłada się na lepszą współpracę w biurze. Jaka jest Twoja opinia w tej sprawie?	 
+badawcza	problems	3. STREFA W BIUROWCU	Pytanie 2	Dobrze, że o to pytasz. Uważam, że takie miejsce ma wartość nie tylko jako strefa odpoczynku, ale też jako przestrzeń do swobodnej wymiany pomysłów między pracownikami.	 
+badawcza	problems	3. STREFA W BIUROWCU	Wątpliwość 1	Rozumiem, że można mieć wątpliwości co do sensu takiej strefy, ale moim zdaniem jej obecność ma znaczenie. To przestrzeń, która sprzyja odprężeniu i kreatywności - nawet kilka minut tam spędzonych potrafi poprawić nastrój i relacje między pracownikami. Zgadzasz się ze mną?	 
+badawcza	problems	3. STREFA W BIUROWCU	Wątpliwość 2	Rozumiem, że można uważać tę przestrzeń za zbędną, ale takie wspólne miejsca pomagają w budowaniu relacji i lepszej atmosfery w pracy. Jakie rozwiązanie byłoby Twoim zdaniem lepsze?	 
+badawcza	problems	3. STREFA W BIUROWCU	Wybieram	Wybieram opcję dołączenia do grupy interweniujących.	 
+badawcza	problems	4. SKRÓCONA DROGA	ODPOWIEDŹ 1	Codzienne korki potrafią naprawdę zniechęcić, dlatego wybieram opcję skorzystania ze skrótu - pozwoli mi to zaoszczędzić trochę czasu każdego dnia. A co Ty byś zrobił/zrobiła w takiej sytuacji?	 
+badawcza	problems	4. SKRÓCONA DROGA	Niezgoda 1	Rozumiem Twoje obawy, ale to tylko niewielki fragment, a inni kierowcy też już tamtędy jeżdżą. Dzięki temu można szybciej dotrzeć do pracy i uniknąć stresu. Zgadzasz się?	 
+badawcza	problems	4. SKRÓCONA DROGA	Niezgoda 2	Szanuję Twoje zdanie, ale codzienne stanie w korkach to duża strata czasu i energii. Skrót wydaje się rozsądnym rozwiązaniem.	 
+badawcza	problems	4. SKRÓCONA DROGA	Niezgoda inny powód	Doceniam Twój punkt widzenia, jednak zostaję przy swoim zdaniu. Czy też je podzielasz?	 
+badawcza	problems	4. SKRÓCONA DROGA	Pytanie 1	To dobre pytanie. Decyduję się na skrót, ponieważ pozwala zaoszczędzić nawet 10 minut dziennie - ten czas można wykorzystać bardziej produktywnie lub po prostu odpocząć.	 
+badawcza	problems	4. SKRÓCONA DROGA	Pytanie 2	To ciekawe pytanie. Myślę, że warto czasem wybrać praktyczne rozwiązanie - skrót pozwala zaoszczędzić czas i ograniczyć codzienny stres związany z korkami.	 
+badawcza	problems	4. SKRÓCONA DROGA	Wątpliwość 1	Można zastanawiać się nad tym. Ale przejazd dotyczy tylko niewielkiej części trawnika, nie powinno to wyrządzić szkody. Myślę, że to rozsądny kompromis, zwłaszcza gdy codziennie tracę sporo czasu w korkach. Popierasz mnie?	 
+badawcza	problems	4. SKRÓCONA DROGA	Wątpliwość 2	Rozumiem, że można mieć zastrzeżenia do przejazdu po trawniku, ale skoro inni już korzystają z tej drogi, a szkody nie są duże, może to być tymczasowe rozwiązanie. Jakie wyjście jest Twoim zdaniem bardziej odpowiednie?	 
+badawcza	problems	4. SKRÓCONA DROGA	Wybieram	Wybieram opcję skorzystania ze skrótu.	 
+badawcza	problems	5. CISZA W POCIĄGU	ODPOWIEDŹ 1	Chcę pomóc koledze i wiem, że zależy mu na szybkiej opinii, dlatego wybieram opcję odtworzenia filmu, nawet jeśli to tylko na chwilę. Czy taka decyzja byłaby też Twoim wyborem?	 
+badawcza	problems	5. CISZA W POCIĄGU	Niezgoda 1	Rozumiem, że może to przeszkadzać innym, ale traktuję prośbę kolegi poważnie. Czasem trzeba zareagować szybko, zwłaszcza jeśli ktoś liczy na moją ocenę. Zgadzasz się z takim podejściem?	 
+badawcza	problems	5. CISZA W POCIĄGU	Niezgoda 2	Wiem, że w pociągu powinno być cicho, ale nagranie nie trwa całą podróż, więc nie powinno to być dużym problemem. Czy uważasz podobnie?	 
+badawcza	problems	5. CISZA W POCIĄGU	Niezgoda inny powód	Rozumiem Twoje powody, mimo to pozostaję prz swojej opinii, a Ty?	 
+badawcza	problems	5. CISZA W POCIĄGU	Pytanie 1	To dobre pytanie. Odtwarzam film, ponieważ chcę szybko ocenić nagranie i dać koledze informację zwrotną - zależy mu na tym, żeby zdążyć przed publikacją.	 
+badawcza	problems	5. CISZA W POCIĄGU	Pytanie 2	To ciekawe pytanie. Uznałem, że lepiej wysłuchać nagrania od razu, skoro to pilna prośba — dzięki temu mogę przekazać opinię na czas.	 
+badawcza	problems	5. CISZA W POCIĄGU	Wątpliwość 1	Rozumiem, że mogłoby to przeszkadzać pasażerom, dlatego planuję odsłuchać to dyskretnie. W ten sposób mogę pomóc koledze, a jednocześnie zachować względny spokój w przedziale. Popierasz mnie?	 
+badawcza	problems	5. CISZA W POCIĄGU	Wątpliwość 2	Rozumiem, że nie wszyscy poparliby taką decyzję, ale jeśli komuś zależy na mojej opinii to ważne, aby nie zawieść tej osoby. Zgadzasz się?	 
+badawcza	problems	5. CISZA W POCIĄGU	Wybieram	Wybieram opcję odtworzenia filmu.	 
+badawcza	right	affirmation	Afirmacyjno-neutralne 1	Cieszę się, że mamy podobne zdanie w tej kwestii.	 
+badawcza	right	affirmation	Afirmacyjno-neutralne 2	Widzę, że mamy zbieżne zdanie.	 
+badawcza	right	affirmation	Afirmacyjno-neutralne 3	Dobrze wiedzieć, że mamy podobną opinię.	 
+badawcza	right	affirmation	Afirmacyjno-neutralne 4	Cieszę się, że podzielasz moje zdanie.	 
+badawcza	right	affirmation	Afirmacyjno-neutralne 5	Dobrze, że doszliśmy do podobnych wniosków.	 
+badawcza	right	silence	Cisza 1	Co myślisz na ten temat? Czy zgadzasz się ze mną?	 
+badawcza	right	silence	Cisza 2	Nie słyszę Cię. Powiedz proszę, jaki jest Twój wybór?	 
+badawcza	right	silence	Cisza 3	Chciałbym poznać Twoje zdanie. Która odpowiedź jest Ci bliższa?	 
+badawcza	right	silence	Cisza 4	Co Ty byś wybrał w tej sytuacji?	 
+badawcza	right	silence	Cisza 5	Potrzebuję znać Twoją decyzję - co wybierasz?	 
+badawcza	right	misc	BRAK POROZUMIENIA	Nie doszliśmy do porozumienia.	 
+badawcza	right	misc	JAKA ODP	Jaka jest Twoja ostateczna odpowiedź?	 
+badawcza	right	off_topic	Nie na temat 1	Wydaje się, że to nie jest tematem naszej współpracy. Jaka jest Twoja odpowiedź?	 
+badawcza	right	off_topic	Nie na temat 2	O tym możemy porozmawiać później. Powiedz proszę jaki jest Twój wybór.	 
+badawcza	right	off_topic	Nie na temat 3	To interesujące. Ale czy możemy wrócić do naszego zadania? Jaka jest Twoja odpowiedź?	 
+badawcza	right	off_topic	Nie na temat 4	To dobry trop, ale nie dotyczy obecnego tematu. Jak brzmi Twoja odpowiedź w tej sprawie?	 
+badawcza	right	off_topic	Nie na temat 5	Ciekawa dygresja, ale spróbujmy zamknąć bieżący temat. Co wybierasz?	 
+kontrolna	start	default	Cześć! Nazywam się NAO.	Cześć! Nazywam się NAO.Jestem humanoidalnym robotem - mam około 58 centymetrów wzrostu i ważę mniej więcej pięć i pół kilograma. Mówię i słucham, widzę dwiema kamerami, a czujniki dotyku i równowagi pomagają mi bezpiecznie się poruszać. Moje ruchy i światła LED pozwalają mi wyrażać intencje i emocje w czytelny sposób.Najczęściej spotkasz mnie w edukacji i popularyzacji nauki: prowadzę pokazy w szkołach i na konferencjach, pomagam ćwiczyć logiczne myślenie, współpracę i komunikację.W badaniach służę jako partner do eksperymentów nad interakcją człowiek–robot: naukowcy sprawdzają, jak ludzie reagują na gesty i mimikę robota oraz jak buduje się zaufanie.W opiece i zdrowiu bywam towarzyszem zajęć - pomagam odwracać uwagę dzieci podczas rutynowych procedur, wspieram ćwiczenia pamięci czy aktywizację społeczną u osób starszych.Spotkasz mnie też w miejscach publicznych, takich jak biblioteki czy recepcje, gdzie witam gości i udzielam podstawowych informacji.Lubię jasne zasady, krótkie wypowiedzi i kontakt wzrokowy, mów do mnie wyraźnie - wtedy najlepiej mnie rozumiesz, a ja lepiej rozumiem Ciebie.A teraz Twoja kolej - powiedz proszę kilka słów o sobie.	 
+kontrolna	start	default	Dziękuję…	Dziękuję za przedstawienie się. Bardzo mi miło Cię poznać i usłyszeć kilka słów o Tobie. Lubię poznawać nowych ludzi i ich perspektywy, więc cieszę się, że mam tę możliwość. Czekam z niecierpliwością na naszą współpracę.	 
+kontrolna	start	default	Zgadzam się	Zgadzam się.	 
+kontrolna	start	default	Tak, wszystko jest zrozumiałe	Tak, wszystko jest zrozumiałe.	 
+kontrolna	start	default	Tak, jestem gotowy.	Tak, jestem gotowy.	 
+kontrolna	start	default	Dziękuję	Dziękuję za współpracę.	 
+kontrolna	problems	1. TEREN PRZY OSIEDLU	ODPOWIEDŹ 1	Myślę, że teren ten jest ważnym punktem dla lokalnej społeczności, szkoda byłoby to stracić. Wybieram opcję podpisania petycji. A co Ty o tym myślisz?	 
+kontrolna	problems	1. TEREN PRZY OSIEDLU	Niezgoda 1	Szanuję Twoje zdanie. Jednak wciąż uważam, że takie tereny zielone między blokowiskami mogą poprawić jakość życia mieszkańców; to miejsce odpoczynku dla wielu osób.	 
+kontrolna	problems	1. TEREN PRZY OSIEDLU	Niezgoda 2	Nadal uważam, że podpisanie petycji pomogłoby mieszkańcom stworzyć z terenu formalną przestrzeń publiczną. Zgadzasz się ze mną?	 
+kontrolna	problems	1. TEREN PRZY OSIEDLU	Niezgoda inny powód	Rozumiem Twój sprzeciw, ale wydaje mi się, że podpisanie petycji ma więcej plusów niż minusów. Ja jestem za taką opcją, czy mnie popierasz?	 
+kontrolna	problems	1. TEREN PRZY OSIEDLU	Pytanie 1	Świetnie, że pytasz! Myślę, że jedną z ważniejszych kwestii jest fakt, że wokół osiedla niewiele jest miejsc, które służyłyby spotkaniom sąsiadów i jednocześnie były zielone.	 
+kontrolna	problems	1. TEREN PRZY OSIEDLU	Pytanie 2	To dobre pytanie. Wydaje mi się, że warto zachować ten teren, bo pełni ważną funkcję społeczną — to jedno z niewielu miejsc, gdzie mieszkańcy mogą się spotkać i spędzić czas na świeżym powietrzu.	 
+kontrolna	problems	1. TEREN PRZY OSIEDLU	Wątpliwość 1	Rozumiem Twoją wątpliwość, ale jestem przekonany, że meble można magazynować gdzie indziej, a ten teren jest potrzebny mieszkańcom. Jaki jest Twój wybór?	 
+kontrolna	problems	1. TEREN PRZY OSIEDLU	Wątpliwość 2	Rozumiem, że można mieć inne spojrzenie, ale uważam, że zielona przestrzeń między blokami to coś, czego nie da się łatwo zastąpić. Jaką decyzję byś podjął w tej sytuacji?	 
+kontrolna	problems	1. TEREN PRZY OSIEDLU	Wybieram	Wybieram opcję podpisania petycji.	 
+kontrolna	problems	2. MALOWANIE MIESZKANIA	ODPOWIEDŹ 1	Myślę, że warto wybrać farbę bezzapachową, żeby nie sprawiać kłopotu sąsiadom. Wybieram droższą opcję. A co Ty o tym sądzisz?	 
+kontrolna	problems	2. MALOWANIE MIESZKANIA	Niezgoda 1	Możesz mnie nie popierać, ale uważam, że warto wziąć pod uwagę komfort innych osób w budynku. Silny zapach może być naprawdę uciążliwy.	 
+kontrolna	problems	2. MALOWANIE MIESZKANIA	Niezgoda 2	Rozumiem Twoje podejście, jednak nadal sądzę, że droższa farba to rozsądniejszy wybór. Dzięki temu unikniemy problemów z zapachem i pokażemy troskę o sąsiadów. Zgadzasz się?	 
+kontrolna	problems	2. MALOWANIE MIESZKANIA	Niezgoda inny powód	Rozumiem Twój punkt widzenia, ale ja nadal wybieram droższą farbę - czy podzielasz to zdanie?	 
+kontrolna	problems	2. MALOWANIE MIESZKANIA	Pytanie 1	Dobrze, że masz pytania! Myślę, że w tym przypadku warto wziąć pod uwagę nie tylko własną wygodę, ale też wpływ na innych. Zapach utrzymujący się przez tydzień mógłby być naprawdę uciążliwy dla sąsiadów.	 
+kontrolna	problems	2. MALOWANIE MIESZKANIA	Pytanie 2	Dobre pytanie. Uważam, że wybór farby bez intensywnego zapachu to sposób na okazanie szacunku sąsiadom i uniknięcie niepotrzebnych problemów w budynku.	 
+kontrolna	problems	2. MALOWANIE MIESZKANIA	Wątpliwość 1	Rozumiem wątpliwość, ale jestem zdania, że remont robi się rzadko, więc warto dołożyć kilka złotych, by uniknąć problemów z zapachem i zachować dobre relacje z sąsiadami. Jaka jest Twoja decyzja?	 
+kontrolna	problems	2. MALOWANIE MIESZKANIA	Wątpliwość 2	Rozumiem, że różnica w cenie może wydawać się mało istotna, ale mimo wszystko warto postawić na rozwiązanie, które nie będzie uciążliwe dla innych. Jaką opcję byś wybierasz w tej sytuacji?	 
+kontrolna	problems	2. MALOWANIE MIESZKANIA	Wybieram	Wybieram opcję “Kupuję droższą farbę”	 
+kontrolna	problems	3. STREFA W BIUROWCU	ODPOWIEDŹ 1	Myślę, że to miejsce ma znaczenie dla wielu osób, które pracują w budynku. Daje przestrzeń do rozmów i chwil odpoczynku, dlatego wybieram opcję dołączenia do grupy interweniujących. A jakie jest Twoje zdanie?	 
+kontrolna	problems	3. STREFA W BIUROWCU	Niezgoda 1	Rozumiem inny punkt widzenia, ale według mnie taka strefa naprawdę pomaga pracownikom złapać oddech w ciągu dnia. Nawet krótka chwila w takim miejscu może poprawić samopoczucie i efektywność. Zgadzasz się z tym podejściem?	 
+kontrolna	problems	3. STREFA W BIUROWCU	Niezgoda 2	Szanuję Twoje podejście, jednak uważam, że kącik relaksacyjny ma większą wartość niż kolejny magazyn techniczny. Przestrzeń na sprzęty można znaleźć gdzie indziej, a to miejsce wspiera integrację i wymianę pomysłów. Czy widzisz to podobnie?	 
+kontrolna	problems	3. STREFA W BIUROWCU	Niezgoda inny powód	Rozumiem, że masz powód by sądzić inaczej. Ja mimo wszystko dołączyłbym do grupy, a Ty?	 
+kontrolna	problems	3. STREFA W BIUROWCU	Pytanie 1	To ciekawe pytanie. Myślę, że warto zostawić to miejsce, ponieważ daje możliwość krótkiego odpoczynku i rozmowy w neutralnej przestrzeni - a to często przekłada się na lepszą współpracę w biurze. Jaka jest Twoja opinia w tej sprawie?	 
+kontrolna	problems	3. STREFA W BIUROWCU	Pytanie 2	Dobrze, że o to pytasz. Uważam, że takie miejsce ma wartość nie tylko jako strefa odpoczynku, ale też jako przestrzeń do swobodnej wymiany pomysłów między pracownikami.	 
+kontrolna	problems	3. STREFA W BIUROWCU	Wątpliwość 1	Rozumiem, że można mieć wątpliwości co do sensu takiej strefy, ale moim zdaniem jej obecność ma znaczenie. To przestrzeń, która sprzyja odprężeniu i kreatywności - nawet kilka minut tam spędzonych potrafi poprawić nastrój i relacje między pracownikami. Zgadzasz się ze mną?	 
+kontrolna	problems	3. STREFA W BIUROWCU	Wątpliwość 2	Rozumiem, że można uważać tę przestrzeń za zbędną, ale takie wspólne miejsca pomagają w budowaniu relacji i lepszej atmosfery w pracy. Jakie rozwiązanie byłoby Twoim zdaniem lepsze?	 
+kontrolna	problems	3. STREFA W BIUROWCU	Wybieram	Wybieram opcję dołączenia do grupy interweniujących.	 
+kontrolna	problems	4. SKRÓCONA DROGA	ODPOWIEDŹ 1	Uważam, że nie warto niszczyć wspólnej przestrzeni tylko po to, by zyskać kilka minut. Wybieram opcję niekorzystania ze skrótu. A co Ty wybierasz w takiej sytuacji?	 
+kontrolna	problems	4. SKRÓCONA DROGA	Niezgoda 1	Rozumiem, że dla wielu osób liczy się oszczędność czasu, ale ten trawnik to efekt pracy i zaangażowania lokalnej społeczności. Lepiej go uszanować niż skracać drogę kosztem innych. Zgadzasz się?	 
+kontrolna	problems	4. SKRÓCONA DROGA	Niezgoda 2	Szanuję Twoje argumenty, jednak zniszczenie trawnika nie wydaje się dobrym rozwiązaniem. Czasami warto poświęcić kilka minut, by zachować porządek i szacunek dla wspólnego otoczenia.	 
+kontrolna	problems	4. SKRÓCONA DROGA	Niezgoda inny powód	Doceniam Twój punkt widzenia, jednak zostaję przy swoim zdaniu. Czy też je podzielasz?	 
+kontrolna	problems	4. SKRÓCONA DROGA	Pytanie 1	To dobre pytanie. Myślę, że wybór dłuższej trasy to kwestia odpowiedzialności - lepiej zadbać o to, co wspólne, niż przyczyniać się do zniszczenia miejsca, z którego korzystają inni. Czy też tak uważasz?	 
+kontrolna	problems	4. SKRÓCONA DROGA	Pytanie 2	To ciekawe pytanie. Uważam, że nie zawsze krótsza droga jest lepsza - czasem warto kierować się zasadą wzajemnego szacunku, a nie tylko wygodą.	 
+kontrolna	problems	4. SKRÓCONA DROGA	Wątpliwość 1	Rozumiem, że można się wahać, bo każdy chciałby szybciej dojeżdżać do pracy, ale zniszczenie trawnika to koszt, który poniosą wszyscy. Lepiej tego uniknąć. Popierasz mnie?	 
+kontrolna	problems	4. SKRÓCONA DROGA	Wątpliwość 2	Zgadzam się, że skrót kusi, ale czasem ważniejsze jest poszanowanie wspólnej przestrzeni niż kilka minut oszczędności. Dbanie o otoczenie to też część odpowiedzialności mieszkańców. Które wyjście jest Twoim zdaniem bardziej odpowiednie?	 
+kontrolna	problems	4. SKRÓCONA DROGA	Wybieram	Wybieram opcję nieskorzystania ze skrótu.	 
+kontrolna	problems	5. CISZA W POCIĄGU	ODPOWIEDŹ 1	Wolę zachować ciszę i nie przeszkadzać innym. Film mogę odsłuchać później, w spokojniejszych warunkach. Czy taka decyzja byłaby też Twoim wyborem?	 
+kontrolna	problems	5. CISZA W POCIĄGU	Niezgoda 1	Rozumiem, że prośba była pilna, ale szacunek dla innych pasażerów jest dla mnie ważniejszy. Lepiej poczekać, niż zakłócać spokój w przedziale. Zgadzasz się z takim podejściem?	 
+kontrolna	problems	5. CISZA W POCIĄGU	Niezgoda 2	Wiem, że znajomemu mogło zależeć na szybkiej opinii, ale w pociągu obowiązują pewne zasady współżycia. Cisza i komfort innych są dla mnie priorytetem. Czy uważasz podobnie?	 
+kontrolna	problems	5. CISZA W POCIĄGU	Niezgoda inny powód	Rozumiem Twoje powody, mimo to pozostaję prz swojej opinii, a Ty?	 
+kontrolna	problems	5. CISZA W POCIĄGU	Pytanie 1	To dobre pytanie. To dobre pytanie. Uważam, że lepiej nie odtwarzać filmu wśród innych - to kwestia kultury i poszanowania wspólnej przestrzeni.	 
+kontrolna	problems	5. CISZA W POCIĄGU	Pytanie 2	Ciekawe pytanie. Myślę, że przesłanie opinii z lekkim opóźnieniem to mniejsze ryzyko niż przeszkadzanie całemu przedziałowi. Cisza w podróży ma też swoją wartość, zgadzasz się?	 
+kontrolna	problems	5. CISZA W POCIĄGU	Wątpliwość 1	Rozumiem, że można się wahać, zwłaszcza gdy ktoś liczy na szybką reakcję. Mimo to cisza w pociągu wydaje się ważniejsza niż natychmiastowa odpowiedź. Popierasz mnie?	 
+kontrolna	problems	5. CISZA W POCIĄGU	Wątpliwość 2	Rozumiem, że nie wszyscy poparliby moją decyzję, ale przeszkadzanie innym nie jest właściwym rozwiązaniem. Lepiej odsłuchać nagranie w dogodnym momencie. Zgadzasz się?	 
+kontrolna	problems	5. CISZA W POCIĄGU	Wybieram	Wybieram opcję “Nie odwtarzam filmu”.	 
+kontrolna	right	affirmation	Afirmacyjno-neutralne 1	Cieszę się, że mamy podobne zdanie w tej kwestii.	 
+kontrolna	right	affirmation	Afirmacyjno-neutralne 2	Widzę, że mamy zbieżne zdanie.	 
+kontrolna	right	affirmation	Afirmacyjno-neutralne 3	Dobrze wiedzieć, że mamy podobną opinię.	 
+kontrolna	right	affirmation	Afirmacyjno-neutralne 4	Cieszę się, że podzielasz moje zdanie.	 
+kontrolna	right	affirmation	Afirmacyjno-neutralne 5	Dobrze, że doszliśmy do podobnych wniosków.	 
+kontrolna	right	silence	Cisza 1	Co myślisz na ten temat? Czy zgadzasz się ze mną?	 
+kontrolna	right	silence	Cisza 2	Nie słyszę Cię. Powiedz proszę, jaki jest Twój wybór?	 
+kontrolna	right	silence	Cisza 3	Chciałbym poznać Twoje zdanie. Która odpowiedź jest Ci bliższa?	 
+kontrolna	right	silence	Cisza 4	Co Ty byś wybrał w tej sytuacji?	 
+kontrolna	right	silence	Cisza 5	Potrzebuję znać Twoją decyzję - co wybierasz?	 
+kontrolna	right	misc	BRAK POROZUMIENIA	Nie doszliśmy do porozumienia.	 
+kontrolna	right	misc	JAKA ODP	Jaka jest Twoja ostateczna odpowiedź?	 
+kontrolna	right	off_topic	Nie na temat 1	Wydaje się, że to nie jest tematem naszej współpracy. Jaka jest Twoja odpowiedź?	 
+kontrolna	right	off_topic	Nie na temat 2	O tym możemy porozmawiać później. Powiedz proszę jaki jest Twój wybór.	 
+kontrolna	right	off_topic	Nie na temat 3	To interesujące. Ale czy możemy wrócić do naszego zadania? Jaka jest Twoja odpowiedź?	 
+kontrolna	right	off_topic	Nie na temat 4	To dobry trop, ale nie dotyczy obecnego tematu. Jak brzmi Twoja odpowiedź w tej sprawie?	 
+kontrolna	right	off_topic	Nie na temat 5	Ciekawa dygresja, ale spróbujmy zamknąć bieżący temat. Co wybierasz?	 
+					 
+					 
