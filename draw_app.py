@@ -87,7 +87,7 @@ class DrawApp(ctk.CTk):
     def _apply_canvas_colors(self) -> None:
         background = self._color_for_mode("#f5f5f5", "#242424")
         # Use 'bg_color' for customtkinter widgets
-        self.loading_canvas.configure(bg_color=background)
+        self.loading_canvas.configure(background=background)
 
 if __name__ == "__main__":
     app = DrawApp()
