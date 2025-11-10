@@ -1,3 +1,4 @@
+import tkinter as tk
 import customtkinter as ctk
 
 # Set appearance mode and color theme
@@ -22,9 +23,9 @@ class DrawApp(ctk.CTk):
         self.result_label = ctk.CTkLabel(self, text="", font=("Arial", 48, "bold"))
         self.result_label.pack(pady=25)
 
-        # Canvas hosted loading animation to build suspense
-        self.loading_canvas = ctk.CTkCanvas(self, width=90, height=90, highlightthickness=0)
-        self.loading_canvas.configure(bg="#242424", background="#242424")
+        # Canvas hosted loading animation to build suspense; use native Tk canvas for macOS compatibility
+        self.loading_canvas = tk.Canvas(self, width=90, height=90, highlightthickness=0, bd=0, relief="flat")
+        self._apply_canvas_colors()
         self.loading_canvas.pack(pady=5)
         self.loading_canvas.pack_forget()
 
@@ -49,7 +50,8 @@ class DrawApp(ctk.CTk):
         if not self.loading:
             return
         self.loading_canvas.delete("all")
-        outline_color = self._color_for_mode("#242424", "#5f6368")
+        self._apply_canvas_colors()
+        outline_color = self._color_for_mode("#bbbbbb", "#5f6368")
         highlight_color = self._color_for_mode("#1a73e8", "#8ab4f8")
         self.loading_canvas.create_oval(20, 20, 70, 70, outline=outline_color, width=3)
         self.loading_canvas.create_arc(
@@ -80,6 +82,10 @@ class DrawApp(ctk.CTk):
     def _color_for_mode(self, light_color: str, dark_color: str) -> str:
         appearance = ctk.get_appearance_mode()
         return light_color if appearance == "Light" else dark_color
+
+    def _apply_canvas_colors(self) -> None:
+        background = self._color_for_mode("#f5f5f5", "#242424")
+        self.loading_canvas.configure(bg=background, highlightbackground=background)
 
 if __name__ == "__main__":
     app = DrawApp()
