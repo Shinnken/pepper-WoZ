@@ -24,7 +24,8 @@ class DrawApp(ctk.CTk):
         self.result_label.pack(pady=25)
 
         # Canvas hosted loading animation to build suspense; use native Tk canvas for macOS compatibility
-        self.loading_canvas = tk.Canvas(self, width=90, height=90, highlightthickness=0, bd=0, relief="flat")
+# NEW
+        self.loading_canvas = ctk.CTkCanvas(self, width=90, height=90, highlightthickness=0, bd=0, relief="flat")
         self._apply_canvas_colors()
         self.loading_canvas.pack(pady=5)
         self.loading_canvas.pack_forget()
@@ -85,7 +86,8 @@ class DrawApp(ctk.CTk):
 
     def _apply_canvas_colors(self) -> None:
         background = self._color_for_mode("#f5f5f5", "#242424")
-        self.loading_canvas.configure(bg=background, highlightbackground=background)
+        # Use 'bg_color' for customtkinter widgets
+        self.loading_canvas.configure(bg_color=background)
 
 if __name__ == "__main__":
     app = DrawApp()
