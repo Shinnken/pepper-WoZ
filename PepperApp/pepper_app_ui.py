@@ -772,7 +772,7 @@ class App(customtkinter.CTk):
         left_width = max(0, left_width)
 
         # IMPORTANT RATIO CONFIGURATION
-        container.grid_columnconfigure(0, weight=4, uniform="dialogue_cols")
+        container.grid_columnconfigure(0, weight=3, uniform="dialogue_cols")
         container.grid_columnconfigure(1, weight=1, uniform="dialogue_cols")
         container.grid_columnconfigure(0, minsize=left_width)
 
