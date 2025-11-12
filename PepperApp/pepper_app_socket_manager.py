@@ -3,12 +3,24 @@ import os
 
 class SocketManager:
     def __init__(self, host: str, port_tcp: int, port_udp: int):
+        self._host = host
+        self._port_tcp = port_tcp
+        self._port_udp = port_udp
         self.tcp_socket: TCPSocketHandler = TCPSocketHandler(host, port_tcp)
         self.udp_socket: UDPSocketHandler = UDPSocketHandler(host, port_udp)
+        self._udp_started = False
         
     def start(self):
         self.tcp_socket.start()
+        if self.udp_socket.is_alive():
+            return
+
+        if self._udp_started and not self.udp_socket.is_alive():
+            # Thread objects cannot be restarted, so create a fresh handler if needed.
+            self.udp_socket = UDPSocketHandler(self._host, self._port_udp)
+
         self.udp_socket.start()
+        self._udp_started = True
 
     
     def check_connection(self) -> bool:
@@ -53,7 +65,7 @@ class SocketManager:
 
     def stop(self):
         print("waiting for frame countdown (line)")
-        header = self.tcp_socket.receive_line(timeout=5.0)
+        header = self.tcp_socket.receive_line(timeout=30.0)
         if not header:
             raise RuntimeError("Timeout waiting for frame count over TCP")
         try:
