@@ -805,8 +805,25 @@ class App(customtkinter.CTk):
             inner.bind("<Enter>", _activate)
             inner.bind("<Leave>", _deactivate)
 
+    def _resolve_scroll_canvas_from_event(self, event):
+        widget = getattr(event, "widget", None)
+
+        while widget is not None:
+            canvas = getattr(widget, "_parent_canvas", None)
+            if canvas is not None:
+                return canvas
+
+            if hasattr(widget, "yview_scroll"):
+                return widget
+
+            widget = getattr(widget, "master", None)
+
+        return None
+
     def _on_mousewheel(self, event):
         canvas = self._active_scroll_canvas
+        if canvas is None:
+            canvas = self._resolve_scroll_canvas_from_event(event)
         if canvas is None:
             return
 
