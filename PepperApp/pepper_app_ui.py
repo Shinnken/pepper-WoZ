@@ -357,8 +357,9 @@ class App(customtkinter.CTk):
         start_buttons = self.button_definitions.get("start", {}).get("default", [])
         self._populate_button_list(self.start_frame, start_buttons, button_height=self.template_button_height_left)
 
-        self.problems_frame = customtkinter.CTkFrame(self.left_container)
+        self.problems_frame = customtkinter.CTkScrollableFrame(self.left_container)
         self.problems_frame.grid(row=0, column=0, sticky="nsew")
+        self._register_scrollable_frame(self.problems_frame)
         self.problems_frame.grid_columnconfigure(0, weight=1)
         self.problems_frame.grid_rowconfigure(1, weight=1)
 
@@ -382,7 +383,7 @@ class App(customtkinter.CTk):
             self.problem_toggle_container.grid_columnconfigure(index, weight=1)
             self.problem_toggle_buttons.append(toggle_button)
 
-            subframe = customtkinter.CTkScrollableFrame(self.problems_frame)
+            subframe = customtkinter.CTkFrame(self.problems_frame)
             subframe.grid(row=1, column=0, sticky="nsew")
             self._register_scrollable_frame(subframe)
             self._populate_button_list(subframe, button_defs, button_height=self.template_button_height_left)
@@ -406,8 +407,7 @@ class App(customtkinter.CTk):
             if group_label in {"affirmation", "silence", "off_topic", "misc"}:
                 group_frame = customtkinter.CTkFrame(self.right_scroll_frame)
             else:
-                group_frame = customtkinter.CTkScrollableFrame(self.right_scroll_frame, label_text=group_label)
-                self._register_scrollable_frame(group_frame)
+                group_frame = customtkinter.CTkFrame(self.right_scroll_frame, label_text=group_label)
             group_frame.grid(row=row_index, column=0, padx=5, pady=(0, 10), sticky="ew")
             self._populate_button_list(
                 group_frame,
