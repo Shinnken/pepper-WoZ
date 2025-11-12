@@ -221,6 +221,10 @@ class App(customtkinter.CTk):
         self._left_content_requested_width = 0
         self._window_icon_image = None
         self._pending_template_button = None
+        try:
+            self._windowing_system = str(self.tk.call("tk", "windowingsystem"))
+        except tkinter.TclError:
+            self._windowing_system = ""
 
     def _configure_window(self):
         self.title("Pepper App")
@@ -806,19 +810,28 @@ class App(customtkinter.CTk):
         if canvas is None:
             return
 
-        delta = 0
-        if event.delta:
-            steps = max(1, abs(event.delta) // 120)
-            delta = -steps if event.delta > 0 else steps
+        delta_units = 0
+        delta_value = getattr(event, "delta", 0)
+        if delta_value:
+            direction = -1 if delta_value > 0 else 1
+            system = getattr(self, "_windowing_system", "")
+            if system == "aqua":
+                delta_units = direction
+            else:
+                magnitude = abs(delta_value)
+                steps = int(magnitude // 120)
+                if steps == 0:
+                    steps = 1
+                delta_units = direction * steps
         else:
             event_num = getattr(event, "num", None)
             if event_num == 4:
-                delta = -1
+                delta_units = -1
             elif event_num == 5:
-                delta = 1
+                delta_units = 1
 
-        if delta:
-            canvas.yview_scroll(delta, "units")
+        if delta_units:
+            canvas.yview_scroll(int(delta_units), "units")
             return "break"
 
     def _handle_template_button_click(self, button, entry):
