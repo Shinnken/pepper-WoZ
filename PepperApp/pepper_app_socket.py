@@ -18,7 +18,7 @@ class TCPSocketHandler:
 
     def start(self) -> None | tuple[str, int]:
         self.socket.listen(1)
-        self.socket.settimeout(5)  # Set a timeout for the accept call
+        self.socket.settimeout(10)  # Set a timeout for the accept call
 
     def accept_connection(self):
         self.conn, addr = self.socket.accept()
