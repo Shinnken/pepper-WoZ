@@ -4,22 +4,10 @@ import threading
 from collections import deque
 from frame_compresser import compress_frame_data
 from SoundReciver_py2 import SoundReceiverModule
-#test
-
-"""
-#Example of implementation of sound recording
-
-from SoundReciver import SoundReceiverModule
 from time import sleep
 
-sound_module_instance = SoundReceiverModule(app.session, name="SoundProcessingModule")
-session.registerService("SoundProcessingModule", sound_module_instance)
-sleep(1)  # Give some time for the module to register
-sound_module_instance.start()
+#test
 
-
-
-"""
 
 
 
@@ -71,12 +59,13 @@ class PepperCamera(object):
             self.session.service("ALVideoDevice").unsubscribe(sub)
 
     def start_recording(self):
-        self.session.service("ALMotion").wakeUp()
-        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
-        #ListeningMovement
+        # self.session.service("ALMotion").wakeUp()
+        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 1.0)
+        sleep(1.0)
+        #ListeningMovement ALFaceDetection.setRecognitionEnabled
+        self.session.service("ALFaceDetection").setRecognitionEnabled(False)
         self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
         self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
-        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 1.0)
         if not self.pepper_camera_recorder:
             self.pepper_camera_recorder = PepperCameraRecorder(self.session, self.vid_handle, self.frames)
             self.pepper_camera_recorder.is_recording = True
@@ -123,6 +112,13 @@ class PepperCamera(object):
 
     def wez_usiadz(self):
         self.session.service("ALRobotPosture").goToPosture("Sit", 1.0)
+
+    def wez_spij(self):
+        self.session.service("ALAutonomousLife").setState("disabled")
+        self.session.service("ALLeds").off("AllLeds")
+
+    def wez_wstawaj(self):
+        self.session.service("ALAutonomousLife").setState("solitary")
 
 
 

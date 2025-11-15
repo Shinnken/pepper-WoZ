@@ -55,6 +55,8 @@ class SocketManager:
                 self.stop()
             case "exit":
                 self.exit()
+            case "sleep" | "wake":
+                pass
             case _:
                 print(f"Unknown command: {command}")
                 return

@@ -54,6 +54,9 @@ class App(customtkinter.CTk):
             self._pending_template_button = None
 
     def toggle_recording(self):
+        if getattr(self, "_stop_in_progress", False):
+            print("Stop already in progress; ignoring toggle.")
+            return
         is_starting = self.record_toggle_button.cget("text") == "Record"
         if is_starting:
             patient_id = self.id_entry.get().strip()
@@ -70,15 +73,11 @@ class App(customtkinter.CTk):
             self.loading_bar.start()
             return
 
-        self.socket_manager.handle_command("stop")
-        self.record_toggle_button.configure(
-            text="Record",
-            fg_color="green",
-            hover_color="#006400",
-        )
-        self.loading_bar.stop()
-        self.loading_bar.configure(mode="determinate")
-        self.loading_bar.set(1)
+        self._stop_in_progress = True
+        self._set_button_state(self.record_toggle_button, "disabled")
+        self.loading_bar.configure(mode="indeterminate")
+        self.loading_bar.start()
+        threading.Thread(target=self._async_stop_recording, daemon=True).start()
 
     def toggle_id_mode(self):
         self.id_mode = "GRUPA EKSPERYMENTALNA" if self.id_mode == "GRUPA KONTROLNA" else "GRUPA KONTROLNA"
@@ -150,6 +149,51 @@ class App(customtkinter.CTk):
         self.destroy()
         print("Application closed.")
 
+    def toggle_power(self):
+        turning_off = self.power_button.cget("text") == "Wyłącz"
+        command = "sleep" if turning_off else "wake"
+        try:
+            self.socket_manager.handle_command(command)
+        except Exception as exc:
+            tkinter.messagebox.showerror("Power command failed", str(exc))
+            return
+
+        if turning_off:
+            self.power_button.configure(
+                text="Włącz",
+                fg_color="#006400",
+                hover_color="#004d00",
+            )
+        else:
+            self.power_button.configure(
+                text="Wyłącz",
+                fg_color="#c96100",
+                hover_color="#9f4c00",
+            )
+
+    def _async_stop_recording(self):
+        error_message = None
+        try:
+            self.socket_manager.handle_command("stop")
+        except Exception as exc:
+            error_message = str(exc)
+        finally:
+            self.after(0, lambda: self._finish_stop_recording(error_message))
+
+    def _finish_stop_recording(self, error_message=None):
+        self._stop_in_progress = False
+        self.loading_bar.stop()
+        self.loading_bar.configure(mode="determinate")
+        self.loading_bar.set(1)
+        self.record_toggle_button.configure(
+            text="Record",
+            fg_color="green",
+            hover_color="#006400",
+        )
+        self._set_button_state(self.record_toggle_button, "normal")
+        if error_message:
+            tkinter.messagebox.showerror("Stop failed", error_message)
+
     def _threaded_connect(self, ip_value):
         try:
             try:
@@ -162,7 +206,7 @@ class App(customtkinter.CTk):
                 self.after(0, lambda msg=error_message: tkinter.messagebox.showerror("Error", msg))
                 return
 
-            deploy_remote(ip_value)
+            # deploy_remote(ip_value)
 
             try:
                 self.socket_manager.tcp_socket.accept_connection()
@@ -214,13 +258,11 @@ class App(customtkinter.CTk):
         self._disabled_button_fg_color = ("#3b3b3b", "#333333")
         self._disabled_button_hover_color = ("#3b3b3b", "#333333")
         self._disabled_button_text_color = "#1f6aa5"
-        self._template_button_registry = {}
-        self._template_container_bindings = set()
-        self._template_container_after_ids = {}
         self._active_scroll_canvas = None
         self._left_content_requested_width = 0
         self._window_icon_image = None
         self._pending_template_button = None
+        self._stop_in_progress = False
         try:
             self._windowing_system = str(self.tk.call("tk", "windowingsystem"))
         except tkinter.TclError:
@@ -231,7 +273,6 @@ class App(customtkinter.CTk):
         self.geometry("1100x580")
         self.after(0, self._maximize_window)
         self.protocol("WM_DELETE_WINDOW", self.close_app)
-        self._configure_window_icon()
 
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=0)
@@ -262,15 +303,31 @@ class App(customtkinter.CTk):
         self.id_entry = customtkinter.CTkEntry(self, width=150)
         self.id_entry.grid(row=0, column=3, padx=(5, 20), pady=20, sticky="w")
 
+        self.mode_power_frame = customtkinter.CTkFrame(self)
+        self.mode_power_frame.grid(row=0, column=4, padx=(0, 20), pady=20, sticky="nsew")
+        self.mode_power_frame.grid_columnconfigure(0, weight=1)
+        self.mode_power_frame.grid_rowconfigure((0, 1), weight=1)
+
         self.id_mode_button = self._create_button(
-            self,
+            self.mode_power_frame,
             text=self.id_mode,
             width=300,
-            height=60,
+            height=30,
             font=self.button_font,
             command=self.toggle_id_mode,
         )
-        self.id_mode_button.grid(row=0, column=4, padx=(0, 20), pady=20, sticky="w")
+        self.id_mode_button.grid(row=0, column=0, padx=0, pady=(0, 5), sticky="ew")
+
+        self.power_button = self._create_button(
+            self.mode_power_frame,
+            text="Wyłącz",
+            width=300,
+            height=30,
+            font=self.button_font,
+            command=self.toggle_power,
+        )
+        self.power_button.configure(fg_color="#c96100", hover_color="#9f4c00")
+        self.power_button.grid(row=1, column=0, padx=0, pady=(5, 0), sticky="ew")
 
         self.record_toggle_button = self._create_button(
             self,
@@ -595,146 +652,14 @@ class App(customtkinter.CTk):
             button.grid(row=row_index, column=0, padx=5, pady=5, sticky="ew")
             if not wrap_text:
                 setattr(button, "_pepper_disable_wraplength", True)
-            self._register_template_button(button)
 
     def _create_button(self, parent, **kwargs):
         button = customtkinter.CTkButton(parent, **kwargs)
         self._initialize_button_colors(button)
         return button
 
-    def _register_template_button(self, button):
-        if button is None:
-            return
-
-        master = getattr(button, "master", None)
-        if master is None:
-            return
-
-        registry = self._template_button_registry.setdefault(master, [])
-        registry.append(button)
-
-        if master not in self._template_container_bindings:
-            try:
-                master.bind("<Configure>", lambda _event, target=master: self._schedule_template_container_update(target))
-            except tkinter.TclError:
-                return
-            self._template_container_bindings.add(master)
-
-        self._schedule_template_container_update(master)
-
-    def _update_template_button_wraplengths(self):
-        for container in list(self._template_button_registry.keys()):
-            self._schedule_template_container_update(container)
-
-    def _schedule_template_container_update(self, container):
-        if container is None:
-            return
-
-        try:
-            exists = container.winfo_exists()
-        except tkinter.TclError:
-            exists = False
-
-        if not exists:
-            self._template_button_registry.pop(container, None)
-            after_id = self._template_container_after_ids.pop(container, None)
-            if after_id is not None:
-                try:
-                    self.after_cancel(after_id)
-                except (ValueError, tkinter.TclError):
-                    pass
-            return
-
-        after_id = self._template_container_after_ids.get(container)
-        if after_id is not None:
-            try:
-                self.after_cancel(after_id)
-            except (ValueError, tkinter.TclError):
-                pass
-
-        self._template_container_after_ids[container] = self.after(25, lambda target=container: self._run_container_update(target))
-
-    def _run_container_update(self, container):
-        if container in self._template_container_after_ids:
-            self._template_container_after_ids.pop(container, None)
-        self._update_button_wraplengths_for_container(container)
-
-    def _update_button_wraplengths_for_container(self, container):
-        if container is None:
-            return
-
-        buttons = self._template_button_registry.get(container)
-        if not buttons:
-            return
-
-        try:
-            available = container.winfo_width()
-        except tkinter.TclError:
-            available = 0
-
-        if available <= 1:
-            try:
-                available = container.winfo_reqwidth()
-            except tkinter.TclError:
-                available = 0
-
-        if available <= 0:
-            return
-
-        wraplength = max(4, available - 12)
-
-        for button in list(buttons):
-            if button is None or not button.winfo_exists():
-                buttons.remove(button)
-                continue
-
-            try:
-                current_width = button.winfo_width()
-            except tkinter.TclError:
-                current_width = 0
-
-            if current_width <= 1:
-                try:
-                    current_width = button.winfo_reqwidth()
-                except tkinter.TclError:
-                    current_width = 0
-
-            width_delta = abs(current_width - available)
-            if width_delta > 3:
-                try:
-                    button.configure(width=available)
-                except tkinter.TclError:
-                    continue
-
-            text_label = getattr(button, "_text_label", None)
-            if text_label is None:
-                continue
-
-            if getattr(button, "_pepper_disable_wraplength", False):
-                try:
-                    text_label.configure(wraplength=0, justify="center")
-                except tkinter.TclError:
-                    pass
-                continue
-
-            try:
-                text_label.configure(wraplength=wraplength, justify="center")
-            except tkinter.TclError:
-                continue
-
-        if not buttons:
-            self._template_button_registry.pop(container, None)
-            self._template_container_bindings.discard(container)
-            after_id = self._template_container_after_ids.pop(container, None)
-            if after_id is not None:
-                try:
-                    self.after_cancel(after_id)
-                except (ValueError, tkinter.TclError):
-                    pass
-
     def _on_dialogue_container_configure(self, _event):
         self._update_dialogue_column_widths()
-        self._update_template_button_wraplengths()
 
     def _update_dialogue_column_widths(self):
         container = getattr(self, "dialogue_container", None)
@@ -901,7 +826,6 @@ class App(customtkinter.CTk):
 
         self._left_content_requested_width = target_width
         self._update_dialogue_column_widths()
-        self._update_template_button_wraplengths()
 
     def _apply_say_textbox_editable_state(self):
         textbox = getattr(self, "large_textbox", None)
@@ -1013,26 +937,6 @@ class App(customtkinter.CTk):
             button.configure(**kwargs)
         else:
             self._restore_button_colors(button)
-
-    def _configure_window_icon(self):
-        icon_directory = os.path.dirname(__file__)
-        candidate_names = ["icon.png", "icon.ico"]
-
-        for name in candidate_names:
-            icon_path = os.path.join(icon_directory, name)
-            if not os.path.exists(icon_path):
-                continue
-
-            try:
-                if icon_path.lower().endswith(".ico") and os.name == "nt":
-                    self.iconbitmap(icon_path)
-                else:
-                    image = tkinter.PhotoImage(file=icon_path)
-                    self.iconphoto(True, image)
-                    self._window_icon_image = image
-                return
-            except tkinter.TclError as error:
-                print(f"Warning: failed to load window icon '{icon_path}': {error}")
 
     def _maximize_window(self):
         try:

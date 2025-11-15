@@ -84,6 +84,8 @@ class PepperSocketManager():
             "start": self.pepper_camera.start_recording,
             "stop":  stop_command,
             "exit": self.exit,
+            "sleep": self.pepper_camera.wez_spij,
+            "wake": self.pepper_camera.wez_wstawaj,
         }
 
         self.tcp_thread_running = True
