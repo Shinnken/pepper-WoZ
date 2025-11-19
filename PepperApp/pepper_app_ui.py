@@ -233,7 +233,7 @@ class App(customtkinter.CTk):
                 self.after(0, lambda msg=error_message: tkinter.messagebox.showerror("Error", msg))
                 return
 
-            # deploy_remote(ip_value)
+            deploy_remote(ip_value)
 
             try:
                 self.socket_manager.tcp_socket.accept_connection()
@@ -255,6 +255,7 @@ class App(customtkinter.CTk):
         tkinter.messagebox.showinfo("Success", "Connection established successfully!")
         self._set_button_state(self.say_button, "normal")
         self._set_button_state(self.record_toggle_button, "normal")
+        self._set_button_state(self.power_button, "normal")
         self.loading_bar.stop()
         self.loading_bar.set(0)
 
@@ -412,6 +413,7 @@ class App(customtkinter.CTk):
 
         self._set_button_state(self.record_toggle_button, "disabled")
         self._set_button_state(self.say_button, "disabled")
+        self._set_button_state(self.power_button, "disabled")
 
     def _load_button_templates(self):
         self.button_template_path = os.path.join(os.path.dirname(__file__), "button_layout_template.tsv")
