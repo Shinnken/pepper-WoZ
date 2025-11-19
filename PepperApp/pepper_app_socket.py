@@ -304,7 +304,7 @@ class UDPSocketHandler(threading.Thread):
                 else:
                     # odebrano czesc klatki
                     bytes_received += data
-                    print(f"udp thread received {len(data)} bytes")
+                    # print(f"udp thread received {len(data)} bytes")
             else:
                 # nie ma juz klatek do odbioru
                 # trzeba przygotować filmik z tego co jest (audio_done == True here)

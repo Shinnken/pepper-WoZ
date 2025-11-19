@@ -79,10 +79,37 @@ class App(customtkinter.CTk):
         self.loading_bar.start()
         threading.Thread(target=self._async_stop_recording, daemon=True).start()
 
-    def toggle_id_mode(self):
-        self.id_mode = "GRUPA EKSPERYMENTALNA" if self.id_mode == "GRUPA KONTROLNA" else "GRUPA KONTROLNA"
-        self.id_mode_button.configure(text=self.id_mode)
-        self._default_template_set = self._current_template_set_key()
+    def select_id_mode(self, target_mode):
+        if not target_mode:
+            return
+
+        normalized_target = target_mode.strip().lower()
+        canonical_mode = None
+        for mode_label in self._id_mode_to_set.keys():
+            if mode_label.lower() == normalized_target:
+                canonical_mode = mode_label
+                break
+
+        if canonical_mode is None:
+            canonical_mode = "GRUPA KONTROLNA"
+
+        if canonical_mode != self.id_mode:
+            self.id_mode = canonical_mode
+            self._default_template_set = self._current_template_set_key()
+
+        self._update_id_mode_buttons()
+
+    def _update_id_mode_buttons(self):
+        button_map = getattr(self, "_id_mode_buttons", None) or {}
+        if not button_map:
+            return
+
+        for mode_label, button in button_map.items():
+            if button is None:
+                continue
+
+            target_state = "disabled" if mode_label == self.id_mode else "normal"
+            self._set_button_state(button, target_state)
 
     def show_start_frame(self):
         self.problems_frame.grid_remove()
@@ -206,7 +233,7 @@ class App(customtkinter.CTk):
                 self.after(0, lambda msg=error_message: tkinter.messagebox.showerror("Error", msg))
                 return
 
-            deploy_remote(ip_value)
+            # deploy_remote(ip_value)
 
             try:
                 self.socket_manager.tcp_socket.accept_connection()
@@ -263,6 +290,7 @@ class App(customtkinter.CTk):
         self._window_icon_image = None
         self._pending_template_button = None
         self._stop_in_progress = False
+        self._id_mode_buttons = {}
         try:
             self._windowing_system = str(self.tk.call("tk", "windowingsystem"))
         except tkinter.TclError:
@@ -308,15 +336,35 @@ class App(customtkinter.CTk):
         self.mode_power_frame.grid_columnconfigure(0, weight=1)
         self.mode_power_frame.grid_rowconfigure((0, 1), weight=1)
 
-        self.id_mode_button = self._create_button(
-            self.mode_power_frame,
-            text=self.id_mode,
-            width=300,
+        self.id_mode_toggle_frame = customtkinter.CTkFrame(self.mode_power_frame)
+        self.id_mode_toggle_frame.grid(row=0, column=0, padx=0, pady=(0, 5), sticky="ew")
+        self.id_mode_toggle_frame.grid_columnconfigure((0, 1), weight=1, uniform="id_mode_cols")
+
+        control_button = self._create_button(
+            self.id_mode_toggle_frame,
+            text="GRUPA KONTROLNA",
+            width=0,
             height=30,
             font=self.button_font,
-            command=self.toggle_id_mode,
+            command=lambda: self.select_id_mode("GRUPA KONTROLNA"),
         )
-        self.id_mode_button.grid(row=0, column=0, padx=0, pady=(0, 5), sticky="ew")
+        control_button.grid(row=0, column=0, padx=(0, 5), sticky="ew")
+
+        experimental_button = self._create_button(
+            self.id_mode_toggle_frame,
+            text="GRUPA EKSPERYMENTALNA",
+            width=0,
+            height=30,
+            font=self.button_font,
+            command=lambda: self.select_id_mode("GRUPA EKSPERYMENTALNA"),
+        )
+        experimental_button.grid(row=0, column=1, padx=(5, 0), sticky="ew")
+
+        self._id_mode_buttons = {
+            "GRUPA KONTROLNA": control_button,
+            "GRUPA EKSPERYMENTALNA": experimental_button,
+        }
+        self._update_id_mode_buttons()
 
         self.power_button = self._create_button(
             self.mode_power_frame,

@@ -46,13 +46,13 @@ badawcza	problems	5. CISZA W POCIĄGU	Niezgoda 1	Rozumiem, że może to przeszka
 badawcza	problems	5. CISZA W POCIĄGU	Niezgoda 2	Wiem, że w pociągu powinno być cicho, ale nagranie nie trwa całą podróż, więc nie powinno to być dużym problemem. Czy uważasz podobnie?	 
 badawcza	problems	5. CISZA W POCIĄGU	Niezgoda inny powód	Rozumiem Twoje powody, mimo to pozostaję przy swojej opinii, a Ty?	 
 badawcza	problems	5. CISZA W POCIĄGU	Pytanie 1	To dobre pytanie. Odtwarzam film, ponieważ chcę szybko ocenić nagranie i dać koledze informację zwrotną - zależy mu na tym, żeby zdążyć przed publikacją.	 
-badawcza	problems	5. CISZA W POCIĄGU	Pytanie 2	To ciekawe pytanie. Uznałem, że lepiej wysłuchać nagrania od razu, skoro to pilna prośba — dzięki temu mogę przekazać opinię na czas.	 
+badawcza	problems	5. CISZA W POCIĄGU	Pytanie 2	To ciekawe pytanie. Uznałem, że lepiej wysłuchać nagrania od razu, skoro to pilna prośba — dzięki temu mogę przekazać swoje zdanie na czas.	 
 badawcza	problems	5. CISZA W POCIĄGU	Wątpliwość 1	Rozumiem, że mogłoby to przeszkadzać pasażerom, dlatego planuję odsłuchać to dyskretnie. W ten sposób mogę pomóc koledze, a jednocześnie zachować względny spokój w przedziale. Popierasz mnie?	 
 badawcza	problems	5. CISZA W POCIĄGU	Wątpliwość 2	Rozumiem, że nie wszyscy poparliby taką decyzję, ale jeśli komuś zależy na mojej opinii to ważne, aby nie zawieść tej osoby. Zgadzasz się?	 
 badawcza	problems	5. CISZA W POCIĄGU	Wybieram	Wybieram opcję odtworzenia filmu.	 
 badawcza	right	affirmation	Afirmacyjno-neutralne 1	Cieszę się, że mamy podobne zdanie w tej kwestii.	 
 badawcza	right	affirmation	Afirmacyjno-neutralne 2	Widzę, że mamy zbieżne zdanie.	 
-badawcza	right	affirmation	Afirmacyjno-neutralne 3	Dobrze wiedzieć, że mamy podobną opinię.	 
+badawcza	right	affirmation	Afirmacyjno-neutralne 3	Dobrze wiedzieć, że myślimy podobnie.	 
 badawcza	right	affirmation	Afirmacyjno-neutralne 4	Cieszę się, że podzielasz moje zdanie.	 
 badawcza	right	affirmation	Afirmacyjno-neutralne 5	Dobrze, że doszliśmy do podobnych wniosków.	 
 badawcza	right	silence	Cisza 1	Co myślisz na ten temat? Czy zgadzasz się ze mną?	 
@@ -120,7 +120,7 @@ kontrolna	problems	5. CISZA W POCIĄGU	Wątpliwość 2	Rozumiem, że nie wszyscy
 kontrolna	problems	5. CISZA W POCIĄGU	Wybieram	Wybieram opcję “Nie odwtarzam filmu”.	 
 kontrolna	right	affirmation	Afirmacyjno-neutralne 1	Cieszę się, że mamy podobne zdanie w tej kwestii.	 
 kontrolna	right	affirmation	Afirmacyjno-neutralne 2	Widzę, że mamy zbieżne zdanie.	 
-kontrolna	right	affirmation	Afirmacyjno-neutralne 3	Dobrze wiedzieć, że mamy podobną opinię.	 
+kontrolna	right	affirmation	Afirmacyjno-neutralne 3	Dobrze wiedzieć, że myślimy podobnie.	 
 kontrolna	right	affirmation	Afirmacyjno-neutralne 4	Cieszę się, że podzielasz moje zdanie.	 
 kontrolna	right	affirmation	Afirmacyjno-neutralne 5	Dobrze, że doszliśmy do podobnych wniosków.	 
 kontrolna	right	silence	Cisza 1	Co myślisz na ten temat? Czy zgadzasz się ze mną?	 

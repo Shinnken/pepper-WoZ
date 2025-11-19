@@ -42,6 +42,18 @@ class PepperCamera(object):
         )
         print("Camera subscribed successfully.")
 
+        self.session.service("ALAutonomousLife").switchFocus("nao_blank-52a8bb/behavior_1")  # Prevent autonomous behaviors from interrupting
+        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 1.0)
+        sleep(1.0)
+        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
+        #ListeningMovement ALFaceDetection.setRecognitionEnabled
+        # self.session.service("ALBasicAwareness").pauseAwareness()
+        # self.session.service("ALPeoplePerception").setMovementDetectionEnabled(False)
+        # self.session.service("ALFaceDetection").setRecognitionEnabled(False)
+        # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
+        
+
+
         # Initialize and register sound receiver service (Python 2.7)
         try:
             self.sound_module_instance = SoundReceiverModule(self.session, name="SoundProcessingModule")
@@ -59,12 +71,14 @@ class PepperCamera(object):
             self.session.service("ALVideoDevice").unsubscribe(sub)
 
     def start_recording(self):
-        # self.session.service("ALMotion").wakeUp()
+        self.session.service("ALMotion").wakeUp() 
         self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 1.0)
         sleep(1.0)
         #ListeningMovement ALFaceDetection.setRecognitionEnabled
-        self.session.service("ALFaceDetection").setRecognitionEnabled(False)
-        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
+        # self.session.service("ALBasicAwareness").pauseAwareness()
+        # self.session.service("ALPeoplePerception").setMovementDetectionEnabled(False)
+        # self.session.service("ALFaceDetection").setRecognitionEnabled(False)
+        # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
         self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
         if not self.pepper_camera_recorder:
             self.pepper_camera_recorder = PepperCameraRecorder(self.session, self.vid_handle, self.frames)
@@ -114,11 +128,14 @@ class PepperCamera(object):
         self.session.service("ALRobotPosture").goToPosture("Sit", 1.0)
 
     def wez_spij(self):
+        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.6), 0.05)
         self.session.service("ALAutonomousLife").setState("disabled")
         self.session.service("ALLeds").off("AllLeds")
 
     def wez_wstawaj(self):
         self.session.service("ALAutonomousLife").setState("solitary")
+        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 0.05)
+
 
 
 
