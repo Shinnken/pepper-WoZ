@@ -122,9 +122,13 @@ class PepperCamera(object):
             pass
     
     def wez_powiedz(self, message):
-        self.session.service("ALAnimatedSpeech").say(message)
-        print("said: ", message)
-
+        try:
+            self.session.service("ALAnimatedSpeech").say(message)
+            # Encode to utf-8 for printing in Python 2 to avoid crash on Polish chars
+            print("said: " + message.encode('utf-8')) 
+        except Exception as e:
+            print("Error in wez_powiedz: " + str(e))
+            
     def wez_usiadz(self):
         self.session.service("ALRobotPosture").goToPosture("Sit", 1.0)
 

@@ -108,17 +108,26 @@ class PepperSocketManager():
                 parts = line.split(' ', 1)
                 command = parts[0].strip().lower()
                 args = parts[1] if len(parts) > 1 else ""
-                if command == "speak":
-                    if args:
-                        print("Just about to say:", args)
-                        self.pepper_camera.wez_powiedz(args)
+# --- START OF FIX ---
+                try:
+                    if command == "speak":
+                        if args:
+                            # Safe print to avoid UnicodeEncodeError in Python 2
+                            print("Just about to say: " + args.encode('utf-8')) 
+                            self.pepper_camera.wez_powiedz(args)
+                        else:
+                            print("Ignoring empty speak command")
+                        continue
+                    
+                    print("received command: " + command)
+                    if command in commands:
+                        commands[command]()
                     else:
-                        print("Ignoring empty speak command")
-                    continue
-                print("received command:", command, "len:", len(self.pepper_camera.frames))
-                if command in commands:
-                    commands[command]()
-        self.tcp_thread_running = False
+                        print("Unknown command: " + command)
+                        
+                except Exception as cmd_error:
+                    print("Error executing command '{}': {}".format(command, cmd_error))
+                # --- END OF FIX ---        self.tcp_thread_running = False
 
 
     def udp_thread_job(self):
