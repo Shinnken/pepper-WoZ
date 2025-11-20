@@ -36,15 +36,16 @@ class SocketManager:
         """
         Sends the command to camera service
         """
+        wire_command = command
         if command == "speak":
             if len(args) == 0:
                 print("No text provided for 'speak' command.")
                 return
             text = args[0]
-            command = f"speak {text}"
+            wire_command = f"speak {text}"
 
-        print("sending command: ", command)
-        command_bytes: bytes = command.encode('utf-8')
+        print("sending command: ", wire_command)
+        command_bytes: bytes = (wire_command.rstrip() + "\n").encode('utf-8')
         self.tcp_socket.send(command_bytes)
         
         match command:
@@ -55,7 +56,7 @@ class SocketManager:
                 self.stop()
             case "exit":
                 self.exit()
-            case "sleep" | "wake":
+            case "sleep" | "wake" | "speak":
                 pass
             case _:
                 print(f"Unknown command: {command}")

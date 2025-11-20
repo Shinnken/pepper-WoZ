@@ -233,7 +233,7 @@ class App(customtkinter.CTk):
                 self.after(0, lambda msg=error_message: tkinter.messagebox.showerror("Error", msg))
                 return
 
-            deploy_remote(ip_value)
+            # deploy_remote(ip_value)
 
             try:
                 self.socket_manager.tcp_socket.accept_connection()

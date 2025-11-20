@@ -89,16 +89,35 @@ class PepperSocketManager():
         }
 
         self.tcp_thread_running = True
+        buffer = b""
         while self.tcp_thread_running:
-            command = str(self.socket_tcp.recv(1024).decode('utf-8')).strip()
-            if len(command) > 6:
-                print("Just about to say: ", command)
-                args = command[6:]
-                command = command[:5]
-                self.pepper_camera.wez_powiedz(args)
-            print("received command: ", command, " len:" , len(self.pepper_camera.frames))
-            if command in commands:
-                commands[command]()
+            try:
+                data = self.socket_tcp.recv(1024)
+            except Exception as e:
+                print("TCP receive failed:", e)
+                break
+            if not data:
+                print("TCP connection closed by peer")
+                break
+            buffer += data
+            while b"\n" in buffer:
+                raw_line, buffer = buffer.split(b"\n", 1)
+                line = raw_line.decode('utf-8', errors='ignore').strip()
+                if not line:
+                    continue
+                parts = line.split(' ', 1)
+                command = parts[0].strip().lower()
+                args = parts[1] if len(parts) > 1 else ""
+                if command == "speak":
+                    if args:
+                        print("Just about to say:", args)
+                        self.pepper_camera.wez_powiedz(args)
+                    else:
+                        print("Ignoring empty speak command")
+                    continue
+                print("received command:", command, "len:", len(self.pepper_camera.frames))
+                if command in commands:
+                    commands[command]()
         self.tcp_thread_running = False
 
 

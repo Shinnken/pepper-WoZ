@@ -43,14 +43,12 @@ class PepperCamera(object):
         print("Camera subscribed successfully.")
 
         self.session.service("ALAutonomousLife").switchFocus("nao_blank-52a8bb/behavior_1")  # Prevent autonomous behaviors from interrupting
-        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 1.0)
-        sleep(1.0)
         self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
+        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
         #ListeningMovement ALFaceDetection.setRecognitionEnabled
         # self.session.service("ALBasicAwareness").pauseAwareness()
         # self.session.service("ALPeoplePerception").setMovementDetectionEnabled(False)
         # self.session.service("ALFaceDetection").setRecognitionEnabled(False)
-        # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
         
 
 
@@ -63,6 +61,9 @@ class PepperCamera(object):
         except Exception as e:
             print("Failed to initialize sound module:", e)
 
+        sleep(0.5)
+        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 1.0)
+        sleep(0.5)
 
     def delete_subs(self, name):
         all_subscribers = self.session.service("ALVideoDevice").getSubscribers()
