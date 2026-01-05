@@ -33,6 +33,7 @@ class PepperSocketManager():
 
         print("connected succesfuly")
 
+        self.pepper_camera.init_qi_session()
         self.tcp_thread.start()
         self.udp_thread.start()
 

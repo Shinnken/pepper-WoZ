@@ -19,7 +19,7 @@ class PepperCamera(object):
         self.pepper_camera_recorder = None
         self.sound_module_instance = None
         self.audio_bytes = None
-        self.init_qi_session()
+        # self.init_qi_session()
 
     def init_qi_session(self):
         CAMERA_INDEX = 0
@@ -29,8 +29,11 @@ class PepperCamera(object):
         self.session = qi.Session()
         self.session.connect("tcp://127.0.0.1:9559")
         self.session.service("ALTextToSpeech").setLanguage("Polish")
-        self.session.service("ALAutonomousLife").setState("solitary")
-        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)  # Disable basic awareness to prevent interruptions
+        self.session.service("ALAutonomousLife").setState("disabled")  # Disable autonomous life to prevent interruptions
+        # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)  # Disable basic awareness to prevent interruptions
+        self.session.service("ALMotion").wakeUp()
+        self.session.service("ALRobotPosture").goToPosture("StandInit", 1.0)
+
         self.delete_subs("kamera")
         self.vid_handle = self.session.service("ALVideoDevice").subscribeCamera(
             "kamera",
@@ -60,12 +63,13 @@ class PepperCamera(object):
 
     def start_recording(self):
         # self.session.service("ALMotion").wakeUp()
-        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 1.0)
+        # self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.3), 1.0)
+        self.session.service("ALMotion").angleInterpolationWithSpeed(("HeadYaw", "HeadPitch"), (0, 0.0), 1.0)
         sleep(1.0)
-        #ListeningMovement ALFaceDetection.setRecognitionEnabled
-        self.session.service("ALFaceDetection").setRecognitionEnabled(False)
-        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
-        self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
+        # #ListeningMovement ALFaceDetection.setRecognitionEnabled
+        # self.session.service("ALFaceDetection").setRecognitionEnabled(False)
+        # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
+        # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
         if not self.pepper_camera_recorder:
             self.pepper_camera_recorder = PepperCameraRecorder(self.session, self.vid_handle, self.frames)
             self.pepper_camera_recorder.is_recording = True
