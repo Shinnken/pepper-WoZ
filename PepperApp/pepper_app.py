@@ -23,7 +23,7 @@ if __name__ == "__main__":
         
 
 
-    app = App(socket_manager)
+    app = App(socket_manager, manual_connection=False)
     app.mainloop()
 
     

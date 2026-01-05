@@ -13,10 +13,11 @@ customtkinter.set_default_color_theme("blue")
 
 
 class App(customtkinter.CTk):
-    def __init__(self, socket_manager: SocketManager):
+    def __init__(self, socket_manager: SocketManager, manual_connection=False):
         super().__init__()
         self.socket_manager = socket_manager
         self.ssh_manager = None
+        self.manual_connection = manual_connection
 
         self._init_state()
         self._configure_window()
@@ -206,7 +207,8 @@ class App(customtkinter.CTk):
                 self.after(0, lambda msg=error_message: tkinter.messagebox.showerror("Error", msg))
                 return
 
-            deploy_remote(ip_value)
+            if not self.manual_connection:
+                deploy_remote(ip_value)
 
             try:
                 self.socket_manager.tcp_socket.accept_connection()
