@@ -27,8 +27,7 @@ class App(customtkinter.CTk):
         self._bind_global_events()
 
         self.loading_bar.set(0)
-        self.show_start_frame()
-        self.after(0, self._equalize_left_panel_width)
+        self.after(0, self._refresh_template_buttons)
 
     def connect(self):
         ip_value = self.ip_entry.get().strip()
@@ -84,42 +83,16 @@ class App(customtkinter.CTk):
         self.id_mode = "GRUPA EKSPERYMENTALNA" if self.id_mode == "GRUPA KONTROLNA" else "GRUPA KONTROLNA"
         self.id_mode_button.configure(text=self.id_mode)
         self._default_template_set = self._current_template_set_key()
+        self._refresh_template_buttons()
 
     def show_start_frame(self):
-        self.problems_frame.grid_remove()
-        self.start_frame.grid()
-        self._set_button_state(self.wstep_button, "disabled")
-        self._set_button_state(self.dylematy_button, "normal")
-        self._equalize_left_panel_width()
+        return
 
     def show_problems_frame(self):
-        self.start_frame.grid_remove()
-        self.problems_frame.grid()
-        self.show_problem_subframe(self.active_problem_index)
-        self._set_button_state(self.dylematy_button, "disabled")
-        self._set_button_state(self.wstep_button, "normal")
-        self._equalize_left_panel_width()
+        return
 
     def show_problem_subframe(self, index: int):
-        if not self.problem_frame_keys or not self.problem_subframes:
-            return
-
-        index = max(0, min(index, len(self.problem_frame_keys) - 1))
-        target_key = self.problem_frame_keys[index]
-        target_frame = self.problem_subframes.get(target_key)
-        if target_frame is None:
-            return
-
-        for frame in self.problem_subframes.values():
-            frame.grid_remove()
-
-        target_frame.grid(row=1, column=0, sticky="nsew")
-
-        for button_index, button in enumerate(self.problem_toggle_buttons):
-            state = "disabled" if button_index == index else "normal"
-            self._set_button_state(button, state)
-
-        self.active_problem_index = index
+        return
 
     def text_button_event(self, text):
         self._set_large_textbox_content(text)
@@ -265,6 +238,7 @@ class App(customtkinter.CTk):
         self._window_icon_image = None
         self._pending_template_button = None
         self._stop_in_progress = False
+        self._template_buttons = []
         try:
             self._windowing_system = str(self.tk.call("tk", "windowingsystem"))
         except tkinter.TclError:
@@ -373,6 +347,12 @@ class App(customtkinter.CTk):
         self._available_button_sets = tuple(available_sets)
         self._available_button_sets_set = set(self._available_button_sets)
 
+        # If there is only the default set (or nothing), disable ID mode switching
+        if len(self._available_button_sets) <= 1:
+            self._set_button_state(self.id_mode_button, "disabled")
+        else:
+            self._set_button_state(self.id_mode_button, "normal")
+
         initial_set = (self._id_mode_to_set.get(self.id_mode, "") or "").strip().lower()
         if initial_set and initial_set in self._available_button_sets_set:
             self._default_template_set = initial_set
@@ -384,100 +364,23 @@ class App(customtkinter.CTk):
     def _build_dialogue_layout(self):
         self.dialogue_container = customtkinter.CTkFrame(self)
         self.dialogue_container.grid(row=2, column=2, columnspan=4, padx=20, pady=20, sticky="nsew")
-        self.dialogue_container.grid_columnconfigure(0, weight=3, uniform="dialogue_cols")
-        self.dialogue_container.grid_columnconfigure(1, weight=2, uniform="dialogue_cols")
-        self.dialogue_container.grid_rowconfigure(1, weight=1)
-        self.dialogue_container.bind("<Configure>", self._on_dialogue_container_configure)
+        self.dialogue_container.grid_rowconfigure(0, weight=1)
+        self.dialogue_container.grid_columnconfigure(0, weight=1)
 
-        toggle_frame = customtkinter.CTkFrame(self.dialogue_container)
-        toggle_frame.grid(row=0, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
-        toggle_frame.grid_columnconfigure((0, 1), weight=1)
-
-        self.wstep_button = self._create_button(
-            toggle_frame,
-            text="Wstęp + Zakończenie",
-            font=self.button_font,
-            command=self.show_start_frame,
+        self.template_scroll_frame = customtkinter.CTkScrollableFrame(
+            self.dialogue_container,
+            label_text="Text Buttons",
+            width=400,
         )
-        self.wstep_button.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        self.template_scroll_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.template_scroll_frame.grid_columnconfigure((0, 1, 2), weight=1)
+        self._register_scrollable_frame(self.template_scroll_frame)
+        self._refresh_template_buttons()
 
-        self.dylematy_button = self._create_button(
-            toggle_frame,
-            text="Dylematy",
-            font=self.button_font,
-            command=self.show_problems_frame,
-        )
-        self.dylematy_button.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-
-        self.left_container = customtkinter.CTkFrame(self.dialogue_container)
-        self.left_container.grid(row=1, column=0, sticky="nsew", padx=(0, 10), pady=(10, 0))
-        self.left_container.grid_rowconfigure(0, weight=1)
-        self.left_container.grid_columnconfigure(0, weight=1)
-
-        self.start_frame = customtkinter.CTkScrollableFrame(self.left_container)
-        self.start_frame.grid(row=0, column=0, sticky="nsew")
-        self._register_scrollable_frame(self.start_frame)
-        start_buttons = self.button_definitions.get("start", {}).get("default", [])
-        self._populate_button_list(self.start_frame, start_buttons, button_height=self.template_button_height_left)
-
-        self.problems_frame = customtkinter.CTkScrollableFrame(self.left_container)
-        self.problems_frame.grid(row=0, column=0, sticky="nsew")
-        self._register_scrollable_frame(self.problems_frame)
-        self.problems_frame.grid_columnconfigure(0, weight=1)
-        self.problems_frame.grid_rowconfigure(1, weight=1)
-
-        self.problem_toggle_container = customtkinter.CTkFrame(self.problems_frame)
-        self.problem_toggle_container.grid(row=0, column=0, padx=5, pady=(0, 10), sticky="ew")
-
-        problem_items = list(self.button_definitions.get("problems", {}).items()) or [("1", [])]
-        self.problem_toggle_buttons = []
-        self.problem_subframes = {}
-        self.problem_frame_keys = []
-
-        for index, (frame_key, button_defs) in enumerate(problem_items):
-            key_text = str(frame_key)
-            toggle_button = self._create_button(
-                self.problem_toggle_container,
-                text=key_text,
-                font=self.button_font,
-                command=lambda idx=index: self.show_problem_subframe(idx),
-            )
-            toggle_button.grid(row=0, column=index, padx=5, sticky="ew")
-            self.problem_toggle_container.grid_columnconfigure(index, weight=1)
-            self.problem_toggle_buttons.append(toggle_button)
-
-            subframe = customtkinter.CTkFrame(self.problems_frame)
-            subframe.grid(row=1, column=0, sticky="nsew")
-            self._register_scrollable_frame(subframe)
-            self._populate_button_list(subframe, button_defs, button_height=self.template_button_height_left)
-            subframe.grid_remove()
-
-            self.problem_subframes[key_text] = subframe
-            self.problem_frame_keys.append(key_text)
-
-        self.active_problem_index = 0
-        self.show_problem_subframe(self.active_problem_index)
-        self.problems_frame.grid_remove()
-
-        self.right_scroll_frame = customtkinter.CTkScrollableFrame(self.dialogue_container, width=200)
-        self.right_scroll_frame.grid(row=1, column=1, sticky="nsew", pady=(10, 0))
-        self._register_scrollable_frame(self.right_scroll_frame)
-        self.right_scroll_frame.grid_columnconfigure(0, weight=1)
-
-        right_items = list(self.button_definitions.get("right", {}).items()) or [("misc", [])]
-        for row_index, (group_name, button_defs) in enumerate(right_items):
-            group_label = str(group_name)
-            if group_label in {"affirmation", "silence", "off_topic", "misc"}:
-                group_frame = customtkinter.CTkFrame(self.right_scroll_frame)
-            else:
-                group_frame = customtkinter.CTkFrame(self.right_scroll_frame, label_text=group_label)
-            group_frame.grid(row=row_index, column=0, padx=5, pady=(0, 10), sticky="ew")
-            self._populate_button_list(
-                group_frame,
-                button_defs,
-                button_height=self.template_button_height_right,
-                wrap_text=False,
-            )
+        try:
+            self.dialogue_container.bind("<Configure>", self._on_dialogue_container_configure)
+        except tkinter.TclError:
+            pass
 
     def _bind_global_events(self):
         self.bind_all("<MouseWheel>", self._on_mousewheel)
@@ -702,10 +605,80 @@ class App(customtkinter.CTk):
 
         left_width = max(0, left_width)
 
-        # IMPORTANT RATIO CONFIGURATION
-        container.grid_columnconfigure(0, weight=3, uniform="dialogue_cols")
-        container.grid_columnconfigure(1, weight=1, uniform="dialogue_cols")
+        container.grid_columnconfigure(0, weight=1)
         container.grid_columnconfigure(0, minsize=left_width)
+        container.grid_columnconfigure(1, weight=0)
+
+    def _collect_flat_button_entries(self):
+        section_order = {"start": 0, "problems": 1, "right": 2}
+        entries = []
+
+        for section, groups in (self.button_definitions or {}).items():
+            if not isinstance(groups, dict):
+                continue
+
+            for group, items in groups.items():
+                for entry in items:
+                    label = entry.get("label") or entry.get("value") or ""
+                    entries.append(
+                        {
+                            "entry": entry,
+                            "label": label,
+                            "section": section,
+                            "group": group,
+                            "order": entry.get("order"),
+                            "sequence": entry.get("sequence", 0),
+                            "section_order": section_order.get(section, 99),
+                        }
+                    )
+
+        entries.sort(
+            key=lambda item: (
+                item.get("section_order", 99),
+                str(item.get("group", "")),
+                0 if item.get("order") is not None else 1,
+                item.get("order", 0) or 0,
+                item.get("sequence", 0),
+            )
+        )
+        return entries
+
+    def _refresh_template_buttons(self):
+        frame = getattr(self, "template_scroll_frame", None)
+        if frame is None:
+            return
+
+        for button in getattr(self, "_template_buttons", []) or []:
+            try:
+                button.destroy()
+            except tkinter.TclError:
+                pass
+        self._template_buttons = []
+
+        entries = self._collect_flat_button_entries()
+        if not entries:
+            placeholder = customtkinter.CTkLabel(frame, text="No options configured")
+            placeholder.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+            self._template_buttons.append(placeholder)
+            return
+
+        for idx, item in enumerate(entries):
+            entry = item.get("entry", {})
+            label = item.get("label", "")
+            display_label = label if len(label) <= 24 else f"{label[:21]}..."
+            row = idx // 3
+            col = idx % 3
+
+            button = self._create_button(
+                frame,
+                text=display_label,
+                width=120,
+                height=self.template_button_height_left,
+                font=self.button_font,
+            )
+            button.configure(command=lambda e=entry, b=button: self._handle_template_button_click(b, e))
+            button.grid(row=row, column=col, padx=10, pady=5, sticky="ew")
+            self._template_buttons.append(button)
 
     def _register_scrollable_frame(self, scroll_frame):
         scroll_frame.grid_columnconfigure(0, weight=1)

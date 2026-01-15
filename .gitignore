@@ -223,3 +223,4 @@ __marimo__/
 
 venv311/
 .idea/
+*old.py
