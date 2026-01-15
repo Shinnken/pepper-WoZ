@@ -9,11 +9,12 @@ if __name__ == "__main__":
     parser.add_argument('--host', type=str, default="192.168.1.103", help='Host IP address')
     parser.add_argument('--port_tcp', type=int, default=54321, help='Port number')
     parser.add_argument('--port_udp', type=int, default=54322, help='Port number')
+    parser.add_argument('--no_life', action='store_true', help='Disable life mode on the camera')
     args = parser.parse_args()
     pepper_socket_manager = None
     try:
         print("Connecting to Pepper Camera...")
-        pepper_camera = PepperCamera()
+        pepper_camera = PepperCamera(args.no_life)
         print("Connecting to Pepper Socket...")
         pepper_socket_manager = PepperSocketManager(args.host, args.port_tcp, args.port_udp, pepper_camera)
         print("Pepper Camera Client is running.")
