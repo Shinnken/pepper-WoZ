@@ -26,6 +26,12 @@ class App(customtkinter.CTk):
         self._build_dialogue_layout()
         self._bind_global_events()
 
+        # Notify user if recording stalls and capture cannot recover.
+        try:
+            self.socket_manager.set_stall_notifier(self._on_capture_stall)
+        except Exception:
+            pass
+
         self.loading_bar.set(0)
         self.after(0, self._refresh_template_buttons)
 
@@ -122,6 +128,13 @@ class App(customtkinter.CTk):
         self.socket_manager.handle_command("exit")
         self.destroy()
         print("Application closed.")
+
+    def _on_capture_stall(self):
+        # Called from UDP thread; marshal to UI thread for popup.
+        self.after(0, lambda: tkinter.messagebox.showwarning(
+            "Recording stalled",
+            "Recording stalled. Please restart the app and try again."
+        ))
 
     def toggle_power(self):
         turning_off = self.power_button.cget("text") == "Wyłącz"

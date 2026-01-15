@@ -174,7 +174,7 @@ class PepperSocketManager():
         Send single frame to server
         '''
         print("sending frame")
-        CHUNK_SIZE = 1400
+        CHUNK_SIZE = 1200
         timestamp_us, payload = frame
         header = struct.pack('!QI', int(timestamp_us), len(payload))
         frame_packet = header + payload
