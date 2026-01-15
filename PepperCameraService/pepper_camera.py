@@ -12,7 +12,7 @@ from time import sleep
 
 
 class PepperCamera(object):
-    def __init__(self, disable_life_mode=False):
+    def __init__(self, disable_life_mode=False, disable_awareness=False):
         # Initialize fields BEFORE creating services, so init_qi_session can set them.
         # Deque gives O(1) pops from the left, avoiding quadratic slowdowns when streaming frames
         self.frames = deque()
@@ -20,8 +20,9 @@ class PepperCamera(object):
         self.sound_module_instance = None
         self.audio_bytes = None
         self.disable_life_mode = disable_life_mode
-        # self.init_qi_session()
+        self.disable_awareness = disable_awareness
 
+# Initialize qi session and services it runs after establishing connection in pepper_socket_manager.py
     def init_qi_session(self):
         CAMERA_INDEX = 0
         RESOLUTION_INDEX = 2
@@ -34,7 +35,7 @@ class PepperCamera(object):
             self.session.service("ALAutonomousLife").setState("disabled")  # Disable autonomous life to prevent interruptions
             # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)  # Disable basic awareness to prevent interruptions
             self.session.service("ALMotion").wakeUp()
-            self.session.service("ALRobotPosture").goToPosture("StandInit", 1.0)
+            self.session.service("ALRobotPosture").goToPosture("StandInit", 1.0)            
         else:
             self.session.service("ALAutonomousLife").setState("solitary")  # Enable autonomous life in solitary mode
             
@@ -76,6 +77,11 @@ class PepperCamera(object):
             # self.session.service("ALFaceDetection").setRecognitionEnabled(False)
             # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
             # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)
+        elif self.disable_awareness:
+            self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", False)  # Disable basic awareness to prevent interruptions
+            # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", False)
+            # self.session.service("ALRobotPosture").goToPosture("Stand", 1.0)
+
         if not self.pepper_camera_recorder:
             self.pepper_camera_recorder = PepperCameraRecorder(self.session, self.vid_handle, self.frames)
             self.pepper_camera_recorder.is_recording = True
@@ -93,6 +99,9 @@ class PepperCamera(object):
             print("sound_module_instance is None; audio will not start.")
 
     def stop_recording(self):
+        if self.disable_awareness:
+            self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("BasicAwareness", True)  # Re-enable basic awareness
+            # self.session.service("ALAutonomousLife").setAutonomousAbilityEnabled("ListeningMovement", True)
         if self.pepper_camera_recorder:
             self.pepper_camera_recorder.is_recording = False
             self.pepper_camera_recorder.join()

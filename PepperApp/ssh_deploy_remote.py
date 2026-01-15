@@ -34,7 +34,7 @@ def get_local_ip() -> str:
 
 def deploy_remote(host='192.168.1.102'):
     local_ip = get_local_ip()
-    script = "~/scripts/pepper_camera_service.py --host {}".format(local_ip)
+    script = "~/scripts/pepper_camera_service.py --host {} --no_life".format(local_ip)
     command = "export {py_env} && nohup python2 {script} &".format(py_env=PYTHONPATH_EXPORT, script=script)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
