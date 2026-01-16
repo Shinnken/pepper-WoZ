@@ -11,7 +11,7 @@ PASS = 'nao'
 CLIENT = '~/scripts/pepper_camera_service.py'
 # Updated for Python 3.9 on NAO
 REMOTE_PYTHONPATH = ':'.join([
-    '/home/nao/.local/share/PackageManager/apps/python3nao/lib/python3.9/site-packages',
+    '/data/home/nao/.local/share/PackageManager/apps/python3nao/lib/python3.9/site-packages',
 ])
 
 # Define the required library preload
@@ -39,7 +39,7 @@ def get_local_ip() -> str:
 
 def deploy_remote(host='192.168.1.102'):
     local_ip = get_local_ip()
-    script = "~/scripts/pepper_camera_service.py --host {} --no_life".format(local_ip)
+    script = "~/scripts/pepper_camera_service.py --host {}".format(local_ip)
     command = "export {py_env} && nohup {venv_py} {script} &".format(
         py_env=PYTHON_ENV_EXPORT, 
         venv_py=VENV_PYTHON,
