@@ -143,6 +143,7 @@ class UDPSocketHandler(threading.Thread):
         self._stalled_capture = False
         self._stall_notifier = None
         self._stall_notified = False
+        self._saving_notifier = None
         self._trim_tail_seconds = 12.0
 
     def attach_tcp_handler(self, tcp_handler: TCPSocketHandler):
@@ -150,6 +151,16 @@ class UDPSocketHandler(threading.Thread):
 
     def set_stall_notifier(self, callback):
         self._stall_notifier = callback
+
+    def set_saving_notifier(self, callback):
+        self._saving_notifier = callback
+
+    def _notify_saving(self, saving: bool):
+        if self._saving_notifier:
+            try:
+                self._saving_notifier(saving)
+            except Exception as exc:
+                print(f"Saving notifier callback failed: {exc}")
 
     def set_patient_id(self, patient_id: int):
         self.patient_id = patient_id
@@ -474,8 +485,10 @@ class UDPSocketHandler(threading.Thread):
                 if self._stalled_capture and audio_payload:
                     trimmed = self._trim_audio_tail(audio_payload, self._trim_tail_seconds)
                     audio_payload = trimmed if trimmed is not None else audio_payload
+                self._notify_saving(True)
                 self.listening = False
                 make_video_from_frames(self.frames, self.patient_id, audio_payload, self.mux_audio)
+                self._notify_saving(False)
                 self.frames_countdown = -1
                 self.frames = []
                 self.audio_bytes = None

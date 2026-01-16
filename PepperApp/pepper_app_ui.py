@@ -32,6 +32,12 @@ class App(customtkinter.CTk):
         except Exception:
             pass
 
+        # Notify UI while video is being saved/muxed.
+        try:
+            self.socket_manager.set_saving_notifier(self._on_saving_state_threadsafe)
+        except Exception:
+            pass
+
         self.loading_bar.set(0)
         self.after(0, self._refresh_template_buttons)
 
@@ -135,6 +141,40 @@ class App(customtkinter.CTk):
             "Recording stalled",
             "Recording stalled. Please restart the app and try again."
         ))
+
+    def _on_saving_state_threadsafe(self, saving: bool):
+        self.after(0, lambda: self._on_saving_state(saving))
+
+    def _on_saving_state(self, saving: bool):
+        if saving:
+            if getattr(self, "_saving_popup", None) is not None:
+                return
+            popup = customtkinter.CTkToplevel(self)
+            popup.title("Saving")
+            popup.geometry("320x120")
+            popup.resizable(False, False)
+            label = customtkinter.CTkLabel(popup, text="Saving video, please wait.")
+            label.pack(expand=True, padx=20, pady=20)
+            popup.protocol("WM_DELETE_WINDOW", lambda: None)
+            try:
+                popup.update_idletasks()
+                popup.grab_set()
+            except tkinter.TclError:
+                pass
+            self._saving_popup = popup
+            return
+
+        popup = getattr(self, "_saving_popup", None)
+        if popup is not None:
+            try:
+                popup.grab_release()
+            except Exception:
+                pass
+            try:
+                popup.destroy()
+            except Exception:
+                pass
+            self._saving_popup = None
 
     def toggle_power(self):
         turning_off = self.power_button.cget("text") == "Wyłącz"
@@ -252,6 +292,7 @@ class App(customtkinter.CTk):
         self._pending_template_button = None
         self._stop_in_progress = False
         self._template_buttons = []
+        self._saving_popup = None
         try:
             self._windowing_system = str(self.tk.call("tk", "windowingsystem"))
         except tkinter.TclError:

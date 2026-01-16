@@ -34,6 +34,12 @@ class SocketManager:
         except Exception:
             pass
 
+    def set_saving_notifier(self, callback):
+        try:
+            self.udp_socket.set_saving_notifier(callback)
+        except Exception:
+            pass
+
     
     def check_connection(self) -> bool:
         if self.tcp_socket.conn is None:
