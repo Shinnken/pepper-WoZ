@@ -128,7 +128,8 @@ class UDPSocketHandler(threading.Thread):
         env_flag = os.getenv('PEPPER_MUX_AUDIO', '1').strip().lower()
         self.mux_audio = env_flag not in ('0', 'false', 'no', 'off')
         # If PEPPER_TCP_AUDIO=1, we won't receive audio via UDP; instead, TCPSocketHandler will deliver it.
-        tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '1').strip().lower()
+        # Default to UDP audio; TCP audio can be re-enabled via PEPPER_TCP_AUDIO=1
+        tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '0').strip().lower()
         self.use_udp_audio = tcp_audio_flag in ('0', 'false', 'no', 'off')
         self._frame_header = struct.Struct('!QI')
         self._last_frame_ts = None
@@ -267,7 +268,8 @@ class UDPSocketHandler(threading.Thread):
         return audio_bytes
 
     def run(self):
-        RECV_SIZE = 1200
+        # Allow for prefixed packets (1 extra byte) and small overhead
+        RECV_SIZE = 1300
         self.running = True
         bytes_received = bytearray()
         receiving_audio = False
@@ -390,6 +392,39 @@ class UDPSocketHandler(threading.Thread):
                     print("No audio will be received")
                     continue
 
+                # Demux prefixed packets (new protocol)
+                if data == b"END":
+                    if bytes_received:
+                        frame_blob = bytes(bytes_received)
+                        bytes_received.clear()
+                        self._handle_frame_blob(frame_blob, suffix="")
+                    else:
+                        print("Warning: received END without frame data; skipping")
+                    if self.frames_countdown < 0:
+                        pass
+                    continue
+
+                if data.startswith(b"A") and self.use_udp_audio and data not in (b"AUDIO_START", b"AUDIO_END", b"AUDIO_NONE"):
+                    payload = data[1:]
+                    if payload:
+                        if not receiving_audio:
+                            receiving_audio = True
+                            self._audio_chunks = 0
+                            self._audio_bytes_accum = 0
+                        audio_buf += payload
+                        self._audio_chunks += 1
+                        self._audio_bytes_accum += len(payload)
+                        if (self._audio_chunks % 50) == 0:
+                            print("Audio receiving... {} bytes so far".format(self._audio_bytes_accum))
+                    continue
+
+                if data.startswith(b"V"):
+                    payload = data[1:]
+                    if payload:
+                        bytes_received += payload
+                        print(f"udp thread received {len(payload)} bytes")
+                    continue
+
                 if self.use_udp_audio and receiving_audio:
                     audio_buf += data
                     self._audio_chunks += 1
@@ -435,11 +470,12 @@ class UDPSocketHandler(threading.Thread):
                 # nie ma juz klatek do odbioru
                 # trzeba przygotować filmik z tego co jest (audio_done == True here)
                 print("Finalizing: frames={}, audio={} bytes".format(len(self.frames), 0 if self.audio_bytes is None else len(self.audio_bytes)))
-                if self._stalled_capture and self.audio_bytes:
-                    trimmed = self._trim_audio_tail(self.audio_bytes, self._trim_tail_seconds)
-                    self.audio_bytes = trimmed if trimmed is not None else self.audio_bytes
+                audio_payload = self._wrap_audio_if_pcm(self.audio_bytes)
+                if self._stalled_capture and audio_payload:
+                    trimmed = self._trim_audio_tail(audio_payload, self._trim_tail_seconds)
+                    audio_payload = trimmed if trimmed is not None else audio_payload
                 self.listening = False
-                make_video_from_frames(self.frames, self.patient_id, self.audio_bytes, self.mux_audio)
+                make_video_from_frames(self.frames, self.patient_id, audio_payload, self.mux_audio)
                 self.frames_countdown = -1
                 self.frames = []
                 self.audio_bytes = None
@@ -506,4 +542,25 @@ class UDPSocketHandler(threading.Thread):
             elif self.frames_countdown == 0 and self._frames_zero_at is None:
                 self._frames_zero_at = time.time()
         return frame_entry is not None
+
+    def _wrap_audio_if_pcm(self, audio_bytes: bytes | None) -> bytes | None:
+        """Ensure audio is WAV; if raw PCM mono16@48k, wrap into WAV."""
+        if not audio_bytes:
+            return None
+        if len(audio_bytes) >= 4 and audio_bytes[:4] == b"RIFF":
+            return audio_bytes
+        try:
+            import io
+            import wave
+
+            buf = io.BytesIO()
+            with wave.open(buf, 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(48000)
+                wf.writeframes(audio_bytes)
+            return buf.getvalue()
+        except Exception as exc:
+            print(f"Failed to wrap PCM audio into WAV: {exc}")
+            return audio_bytes
 

@@ -91,7 +91,8 @@ class SocketManager:
         print(f"Frames left: {frames_left}")
         self.udp_socket.frames_countdown = frames_left
         # Optionally receive audio over TCP for reliability
-        tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '1').strip().lower()
+        # Default to UDP audio; set PEPPER_TCP_AUDIO=1 to force TCP audio download
+        tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '0').strip().lower()
         use_tcp_audio = tcp_audio_flag not in ('0', 'false', 'no', 'off')
         if use_tcp_audio:
             try:
