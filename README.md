@@ -21,3 +21,52 @@ Communication is handled via:
 
 -   **TCP**: For reliable transmission of commands (e.g., start/stop recording, speak) and status messages.
 -   **UDP**: For low-latency streaming of video and audio data.
+
+## Block diagram
+
+```mermaid
+graph TD
+    subgraph PC [Operator PC - PepperApp]
+        StartPC(Start: pepper_app.py)
+        InitSock[SocketManager: Bind TCP/UDP]
+        GUI[Interfejs Operatora]
+        SendTCP[Wyślij komendę TCP]
+        RecvUDP[Odbierz Video/Audio UDP]
+        Verify[Weryfikacja liczby klatek]
+    end
+
+    subgraph ROBOT [Pepper Robot - PepperCameraService]
+        StartRob(Start: pepper_camera_service.py)
+        Connect[Połącz z IP Operatora]
+        InitHW[Inicjalizacja Kamery i QiSession]
+        Listener{Pętla nasłuchu TCP}
+        ExecSpeak[Wykonaj: TTS / Ruch]
+        StartRec[Rozpocznij Capture]
+        StreamLoop{Pętla Streamingu}
+        ProcessFrame[Kompresja i podział pakietów]
+        SendUDP_Rob[Wyślij pakiety UDP V/A]
+    end
+
+    %% Inicjalizacja
+    StartPC --> InitSock --> GUI
+    StartRob --> InitHW --> Connect
+    Connect -.->|TCP Connect| InitSock
+
+    %% Sterowanie
+    GUI -->|Kliknięcie przycisku| SendTCP
+    SendTCP -->|Komendy: start, stop, speak| Listener
+    
+    Listener -->|'speak'| ExecSpeak
+    Listener -->|'start'| StartRec
+    Listener -->|'stop'| Verify
+
+    %% Streaming
+    StartRec --> StreamLoop
+    StreamLoop --> ProcessFrame
+    ProcessFrame --> SendUDP_Rob
+    SendUDP_Rob -->|Dane: Obraz i Dźwięk| RecvUDP
+    RecvUDP --> GUI
+
+    %% Zakończenie nagrania
+    Verify -.->|TCP: Liczba klatek| StreamLoop
+```
