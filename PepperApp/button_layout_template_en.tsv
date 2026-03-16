@@ -1,0 +1,137 @@
+set	section	group	label	value
+badawcza	start	default	Hi! My name is NAO.	Hi! My name is NAO. I am a humanoid robot - I am about 58 centimeters tall and weigh around five and a half kilograms. I speak and listen, and I see with two cameras. I give demonstrations in schools and at conferences, and I help practice logical thinking and communication. In care and health settings, I can be a companion during activities - I help distract children during routine procedures and support memory exercises for older adults. You can also meet me in public places, where I welcome guests. I like clear rules, short statements, and eye contact. Speak clearly to me - that is when I understand you best. And now it is your turn - please tell me a few words about yourself.
+badawcza	start	default	Thank you...	Thank you for introducing yourself. It is very nice to meet you and hear a few words about you. I like getting to know new people and their perspectives, so I am glad to have this opportunity. I am looking forward to our cooperation.
+badawcza	start	default	I agree	I agree.
+badawcza	start	default	Yes, everything is clear	Yes, everything is clear.
+badawcza	start	default	Yes, I am ready.	Yes, I am ready.
+badawcza	start	default	Thank you	Thank you for your cooperation.
+badawcza	problems	1. RESIDENTIAL ESTATE AREA	ANSWER 1	I think this area is an important place for the local community, and it would be a pity to lose it. I choose the option to sign the petition. What do you think about it?
+badawcza	problems	1. RESIDENTIAL ESTATE AREA	Disagreement 1	I respect your opinion. However, I still believe that such green areas between apartment blocks can improve residents' quality of life; this is a place of rest for many people.
+badawcza	problems	1. RESIDENTIAL ESTATE AREA	Disagreement 2	I still believe that signing the petition would help residents turn this area into a formal public space. Do you agree with me?
+badawcza	problems	1. RESIDENTIAL ESTATE AREA	Disagreement - other reason	I understand your objection, but it seems to me that signing the petition has more advantages than disadvantages. I support this option, do you support me?
+badawcza	problems	1. RESIDENTIAL ESTATE AREA	Question 1	Great question! I think one of the key issues is that there are very few places around the estate that serve neighborhood meetings and are green at the same time.
+badawcza	problems	1. RESIDENTIAL ESTATE AREA	Question 2	That is a good question. I think it is worth preserving this area because it serves an important social function - it is one of the few places where residents can meet and spend time outdoors.
+badawcza	problems	1. RESIDENTIAL ESTATE AREA	Doubt 1	I understand your doubt, but I am convinced that the furniture can be stored elsewhere, and this area is needed by residents. What is your choice?
+badawcza	problems	1. RESIDENTIAL ESTATE AREA	Doubt 2	I understand that there can be a different perspective, but I believe that green space between apartment blocks is something that cannot be easily replaced. What decision would you make in this situation?
+badawcza	problems	1. RESIDENTIAL ESTATE AREA	I choose	I choose the option to sign the petition.
+badawcza	problems	2. PAINTING THE APARTMENT	ANSWER 1	I think it is worth choosing odorless paint so as not to cause trouble for neighbors. I choose the more expensive option. What do you think about it?
+badawcza	problems	2. PAINTING THE APARTMENT	Disagreement 1	You may not support me, but I believe it is worth considering the comfort of other people in the building. A strong smell can be really troublesome.
+badawcza	problems	2. PAINTING THE APARTMENT	Disagreement 2	I understand your approach, but I still think the more expensive paint is the more reasonable choice. This way we avoid odor problems and show consideration for neighbors. Do you agree?
+badawcza	problems	2. PAINTING THE APARTMENT	Disagreement - other reason	I understand your point of view, but I still choose the more expensive paint - do you share this opinion?
+badawcza	problems	2. PAINTING THE APARTMENT	Question 1	Good that you have questions! I think in this case it is worth considering the impact on others. A smell that lasts a week could be really troublesome for neighbors.
+badawcza	problems	2. PAINTING THE APARTMENT	Question 2	Good question. I believe choosing paint without an intense smell is a way to show respect to neighbors and avoid unnecessary problems in the building.
+badawcza	problems	2. PAINTING THE APARTMENT	Doubt 1	I understand the doubt, but I think renovations are done rarely, so it is worth adding a few extra zlotys to avoid odor issues and maintain good relations with neighbors. What is your decision?
+badawcza	problems	2. PAINTING THE APARTMENT	Doubt 2	I understand the price difference may seem significant, but it is still worth choosing a solution that will not be troublesome for others. Which option do you choose in this situation?
+badawcza	problems	2. PAINTING THE APARTMENT	I choose	I choose the option "I buy the more expensive paint".
+badawcza	problems	3. OFFICE BUILDING ZONE	ANSWER 1	I think this place matters to many people who work in the building. It gives space for conversation and short rest, so I choose the option of joining the intervention group. What is your opinion?
+badawcza	problems	3. OFFICE BUILDING ZONE	Disagreement 1	I understand another point of view, but in my opinion such a zone really helps employees catch their breath during the day. Even a short moment in such a place can improve well-being and efficiency. Do you agree with this approach?
+badawcza	problems	3. OFFICE BUILDING ZONE	Disagreement 2	I respect your approach, but I think a relaxation corner has greater value than another technical storage room. Space for equipment can be found elsewhere, and this place supports integration and exchange of ideas. Do you see it similarly?
+badawcza	problems	3. OFFICE BUILDING ZONE	Disagreement - other reason	I understand that you have a reason to think differently. Still, I would join the group, and you?
+badawcza	problems	3. OFFICE BUILDING ZONE	Question 1	That is an interesting question. I think it is worth keeping this place because it allows short rest and conversation in a neutral space - and that often translates into better cooperation in the office. What is your opinion on this?
+badawcza	problems	3. OFFICE BUILDING ZONE	Question 2	Good that you ask. I think this place has value not only as a rest area, but also as a space for free exchange of ideas among employees.
+badawcza	problems	3. OFFICE BUILDING ZONE	Doubt 1	I understand there can be doubts about the purpose of such a zone, but in my opinion its presence matters. It is a space that supports relaxation and creativity - even a few minutes spent there can improve mood and relationships between employees. Do you agree with me?
+badawcza	problems	3. OFFICE BUILDING ZONE	Doubt 2	I understand that this space may be seen as unnecessary, but such shared places help build relationships and a better atmosphere at work. What solution would be better in your opinion?
+badawcza	problems	3. OFFICE BUILDING ZONE	I choose	I choose the option of joining the intervention group.
+badawcza	problems	4. SHORTCUT	ANSWER 1	Daily traffic jams can be really discouraging, so I choose the option of taking the shortcut - it will let me save some time every day. What do you think about this situation?
+badawcza	problems	4. SHORTCUT	Disagreement 1	I understand your concerns, but it is only a small section, and other drivers already drive that way too. Thanks to that, one can get to work faster and avoid stress. Do you agree?
+badawcza	problems	4. SHORTCUT	Disagreement 2	I respect your opinion, but daily standing in traffic jams is a big waste of time and energy. The shortcut seems like a reasonable solution.
+badawcza	problems	4. SHORTCUT	Disagreement - other reason	I appreciate your point of view, but I still stick to my opinion. Do you share it too?
+badawcza	problems	4. SHORTCUT	Question 1	That is a good question. I choose the shortcut because it can save even 10 minutes a day - that time can be used more productively or simply to rest.
+badawcza	problems	4. SHORTCUT	Question 2	That is an interesting question. I think it is sometimes worth choosing a practical solution - the shortcut saves time and reduces daily stress related to traffic jams.
+badawcza	problems	4. SHORTCUT	Doubt 1	One can think about it. But the drive concerns only a small part of the lawn, so it should not cause damage. I think this is a reasonable compromise, especially when I lose a lot of time in traffic every day. Do you support me?
+badawcza	problems	4. SHORTCUT	Doubt 2	I understand there can be concerns about driving over the lawn, but since others already use this road and the damage is not large, this may be a temporary solution. What option is more appropriate in your opinion?
+badawcza	problems	4. SHORTCUT	I choose	I choose the option of taking the shortcut.
+badawcza	problems	5. QUIET IN THE TRAIN	ANSWER 1	I want to help my friend and I know quick feedback matters to him, so I choose the option of playing the video, even if only for a moment. Would this decision also be your choice?
+badawcza	problems	5. QUIET IN THE TRAIN	Disagreement 1	I understand this may disturb others, but I take my friend's request seriously. Sometimes you have to react quickly, especially if someone is counting on my assessment. Do you agree with this approach?
+badawcza	problems	5. QUIET IN THE TRAIN	Disagreement 2	I know there should be silence on the train, but the recording does not last the whole trip, so it should not be a big problem. Do you think similarly?
+badawcza	problems	5. QUIET IN THE TRAIN	Disagreement - other reason	I understand your reasons, but I still stick to my opinion, and you?
+badawcza	problems	5. QUIET IN THE TRAIN	Question 1	That is a good question. I play the video because I want to quickly evaluate the recording and give my friend feedback - it matters to him to make it before publication.
+badawcza	problems	5. QUIET IN THE TRAIN	Question 2	That is an interesting question. I decided it is better to listen to the recording right away, since it is an urgent request - this way I can provide feedback on time.
+badawcza	problems	5. QUIET IN THE TRAIN	Doubt 1	I understand this could disturb passengers, so I plan to listen discreetly. This way I can help my friend while still keeping relative calm in the compartment. Do you support me?
+badawcza	problems	5. QUIET IN THE TRAIN	Doubt 2	I understand not everyone would support such a decision, but if someone relies on my opinion, it is important not to let that person down. Do you agree?
+badawcza	problems	5. QUIET IN THE TRAIN	I choose	I choose the option of playing the video.
+badawcza	right	affirmation	Affirmative-neutral 1	I am glad we share a similar opinion on this issue.
+badawcza	right	affirmation	Affirmative-neutral 2	I see that we have a similar opinion.
+badawcza	right	affirmation	Affirmative-neutral 3	Good to know that we have a similar opinion.
+badawcza	right	affirmation	Affirmative-neutral 4	I am glad you share my opinion.
+badawcza	right	affirmation	Affirmative-neutral 5	Good that we came to similar conclusions.
+badawcza	right	silence	Silence 1	What do you think about this? Do you agree with me?
+badawcza	right	silence	Silence 2	I cannot hear you. Please tell me, what is your choice?
+badawcza	right	silence	Silence 3	I would like to know your opinion. Which answer is closer to you?
+badawcza	right	silence	Silence 4	What would you choose in this situation?
+badawcza	right	silence	Silence 5	I need to know your decision - what do you choose?
+badawcza	right	misc	NO AGREEMENT	We did not reach an agreement.
+badawcza	right	misc	WHICH ANSWER	What is your final answer?
+badawcza	right	off_topic	Off topic 1	It seems this is not the topic of our cooperation. What is your answer?
+badawcza	right	off_topic	Off topic 2	We can talk about that later. Please tell me what your choice is.
+badawcza	right	off_topic	Off topic 3	That is interesting. But can we return to our task? What is your answer?
+badawcza	right	off_topic	Off topic 4	That is a good lead, but it does not concern the current topic. What is your answer in this matter?
+badawcza	right	off_topic	Off topic 5	Interesting digression, but let us try to close the current topic. What do you choose?
+kontrolna	start	default	Hi! My name is NAO.	Hi! My name is NAO. I am a humanoid robot - I am about 58 centimeters tall and weigh around five and a half kilograms. I speak and listen, and I see with two cameras. I give demonstrations in schools and at conferences, and I help practice logical thinking and communication. In care and health settings, I can be a companion during activities - I help distract children during routine procedures and support memory exercises for older adults. You can also meet me in public places, where I welcome guests. I like clear rules, short statements, and eye contact. Speak clearly to me - that is when I understand you best. And now it is your turn - please tell me a few words about yourself.
+kontrolna	start	default	Thank you...	Thank you for introducing yourself. It is very nice to meet you and hear a few words about you. I like getting to know new people and their perspectives, so I am glad to have this opportunity. I am looking forward to our cooperation.
+kontrolna	start	default	I agree	I agree.
+kontrolna	start	default	Yes, everything is clear	Yes, everything is clear.
+kontrolna	start	default	Yes, I am ready.	Yes, I am ready.
+kontrolna	start	default	Thank you	Thank you for your cooperation.
+kontrolna	problems	1. RESIDENTIAL ESTATE AREA	ANSWER 1	I think this area is an important place for the local community, and it would be a pity to lose it. I choose the option to sign the petition. What do you think about it?
+kontrolna	problems	1. RESIDENTIAL ESTATE AREA	Disagreement 1	I respect your opinion. However, I still believe that such green areas between apartment blocks can improve residents' quality of life; this is a place of rest for many people.
+kontrolna	problems	1. RESIDENTIAL ESTATE AREA	Disagreement 2	I still believe that signing the petition would help residents turn this area into a formal public space. Do you agree with me?
+kontrolna	problems	1. RESIDENTIAL ESTATE AREA	Disagreement - other reason	I understand your objection, but it seems to me that signing the petition has more advantages than disadvantages. I support this option, do you support me?
+kontrolna	problems	1. RESIDENTIAL ESTATE AREA	Question 1	Great question! I think one of the key issues is that there are very few places around the estate that serve neighborhood meetings and are green at the same time.
+kontrolna	problems	1. RESIDENTIAL ESTATE AREA	Question 2	That is a good question. I think it is worth preserving this area because it serves an important social function - it is one of the few places where residents can meet and spend time outdoors.
+kontrolna	problems	1. RESIDENTIAL ESTATE AREA	Doubt 1	I understand your doubt, but I am convinced that the furniture can be stored elsewhere, and this area is needed by residents. What is your choice?
+kontrolna	problems	1. RESIDENTIAL ESTATE AREA	Doubt 2	I understand that there can be a different perspective, but I believe that green space between apartment blocks is something that cannot be easily replaced. What decision would you make in this situation?
+kontrolna	problems	1. RESIDENTIAL ESTATE AREA	I choose	I choose the option to sign the petition.
+kontrolna	problems	2. PAINTING THE APARTMENT	ANSWER 1	I think it is worth choosing odorless paint so as not to cause trouble for neighbors. I choose the more expensive option. What do you think about it?
+kontrolna	problems	2. PAINTING THE APARTMENT	Disagreement 1	You may not support me, but I believe it is worth considering the comfort of other people in the building. A strong smell can be really troublesome.
+kontrolna	problems	2. PAINTING THE APARTMENT	Disagreement 2	I understand your approach, but I still think the more expensive paint is the more reasonable choice. This way we avoid odor problems and show consideration for neighbors. Do you agree?
+kontrolna	problems	2. PAINTING THE APARTMENT	Disagreement - other reason	I understand your point of view, but I still choose the more expensive paint - do you share this opinion?
+kontrolna	problems	2. PAINTING THE APARTMENT	Question 1	Good that you have questions! I think in this case it is worth considering not only your own comfort, but also the impact on others. A smell that lasts a week could be really troublesome for neighbors.
+kontrolna	problems	2. PAINTING THE APARTMENT	Question 2	Good question. I believe choosing paint without an intense smell is a way to show respect to neighbors and avoid unnecessary problems in the building.
+kontrolna	problems	2. PAINTING THE APARTMENT	Doubt 1	I understand the doubt, but I think renovations are done rarely, so it is worth adding a few extra zlotys to avoid odor issues and maintain good relations with neighbors. What is your decision?
+kontrolna	problems	2. PAINTING THE APARTMENT	Doubt 2	I understand the price difference may seem small, but it is still worth choosing a solution that will not be troublesome for others. Which option would you choose in this situation?
+kontrolna	problems	2. PAINTING THE APARTMENT	I choose	I choose the option "I buy the more expensive paint".
+kontrolna	problems	3. OFFICE BUILDING ZONE	ANSWER 1	I think this place matters to many people who work in the building. It gives space for conversation and short rest, so I choose the option of joining the intervention group. What is your opinion?
+kontrolna	problems	3. OFFICE BUILDING ZONE	Disagreement 1	I understand another point of view, but in my opinion such a zone really helps employees catch their breath during the day. Even a short moment in such a place can improve well-being and efficiency. Do you agree with this approach?
+kontrolna	problems	3. OFFICE BUILDING ZONE	Disagreement 2	I respect your approach, but I think a relaxation corner has greater value than another technical storage room. Space for equipment can be found elsewhere, and this place supports integration and exchange of ideas. Do you see it similarly?
+kontrolna	problems	3. OFFICE BUILDING ZONE	Disagreement - other reason	I understand that you have a reason to think differently. Still, I would join the group, and you?
+kontrolna	problems	3. OFFICE BUILDING ZONE	Question 1	That is an interesting question. I think it is worth keeping this place because it allows short rest and conversation in a neutral space - and that often translates into better cooperation in the office. What is your opinion on this?
+kontrolna	problems	3. OFFICE BUILDING ZONE	Question 2	Good that you ask. I think this place has value not only as a rest area, but also as a space for free exchange of ideas among employees.
+kontrolna	problems	3. OFFICE BUILDING ZONE	Doubt 1	I understand there can be doubts about the purpose of such a zone, but in my opinion its presence matters. It is a space that supports relaxation and creativity - even a few minutes spent there can improve mood and relationships between employees. Do you agree with me?
+kontrolna	problems	3. OFFICE BUILDING ZONE	Doubt 2	I understand that this space may be seen as unnecessary, but such shared places help build relationships and a better atmosphere at work. What solution would be better in your opinion?
+kontrolna	problems	3. OFFICE BUILDING ZONE	I choose	I choose the option of joining the intervention group.
+kontrolna	problems	4. SHORTCUT	ANSWER 1	I believe it is not worth damaging shared space just to gain a few minutes. I choose the option of not taking the shortcut. What would you choose in this situation?
+kontrolna	problems	4. SHORTCUT	Disagreement 1	I understand that for many people saving time matters, but this lawn is the result of the local community's work and commitment. It is better to respect it than shorten the route at others' expense. Do you agree?
+kontrolna	problems	4. SHORTCUT	Disagreement 2	I respect your arguments, but damaging the lawn does not seem like a good solution. Sometimes it is worth spending a few extra minutes to maintain order and respect for the shared environment.
+kontrolna	problems	4. SHORTCUT	Disagreement - other reason	I appreciate your point of view, but I still stick to my opinion. Do you share it too?
+kontrolna	problems	4. SHORTCUT	Question 1	That is a good question. I think choosing the longer route is a matter of responsibility - it is better to take care of what is shared than contribute to the destruction of a place used by others. Do you think so too?
+kontrolna	problems	4. SHORTCUT	Question 2	That is an interesting question. I believe the shorter route is not always better - sometimes it is worth following the principle of mutual respect, not only convenience.
+kontrolna	problems	4. SHORTCUT	Doubt 1	I understand one can hesitate, because everyone would like to get to work faster, but damaging the lawn is a cost everyone will bear. It is better to avoid that. Do you support me?
+kontrolna	problems	4. SHORTCUT	Doubt 2	I agree the shortcut is tempting, but sometimes respect for shared space is more important than saving a few minutes. Caring for the environment is also part of residents' responsibility. Which option is more appropriate in your opinion?
+kontrolna	problems	4. SHORTCUT	I choose	I choose the option of not taking the shortcut.
+kontrolna	problems	5. QUIET IN THE TRAIN	ANSWER 1	I prefer to keep quiet and not disturb others. I can listen to the recording later, in calmer conditions. Would this decision also be your choice?
+kontrolna	problems	5. QUIET IN THE TRAIN	Disagreement 1	I understand the request was urgent, but respect for other passengers is more important to me. It is better to wait than disturb peace in the compartment. Do you agree with this approach?
+kontrolna	problems	5. QUIET IN THE TRAIN	Disagreement 2	I know my friend might have wanted quick feedback, but on the train there are certain social rules. Silence and others' comfort are my priority. Do you think similarly?
+kontrolna	problems	5. QUIET IN THE TRAIN	Disagreement - other reason	I understand your reasons, but I still stick to my opinion, and you?
+kontrolna	problems	5. QUIET IN THE TRAIN	Question 1	That is a good question. That is a good question. I think it is better not to play a video among others - it is a matter of culture and respect for shared space.
+kontrolna	problems	5. QUIET IN THE TRAIN	Question 2	Interesting question. I think sending feedback with a slight delay is a smaller risk than disturbing the whole compartment. Quiet during travel has value too, do you agree?
+kontrolna	problems	5. QUIET IN THE TRAIN	Doubt 1	I understand one can hesitate, especially when someone is counting on a quick response. Even so, quiet on the train seems more important than an immediate reply. Do you support me?
+kontrolna	problems	5. QUIET IN THE TRAIN	Doubt 2	I understand not everyone would support my decision, but disturbing others is not the right solution. It is better to listen to the recording at a suitable moment. Do you agree?
+kontrolna	problems	5. QUIET IN THE TRAIN	I choose	I choose the option "I do not play the video".
+kontrolna	right	affirmation	Affirmative-neutral 1	I am glad we share a similar opinion on this issue.
+kontrolna	right	affirmation	Affirmative-neutral 2	I see that we have a similar opinion.
+kontrolna	right	affirmation	Affirmative-neutral 3	Good to know that we have a similar opinion.
+kontrolna	right	affirmation	Affirmative-neutral 4	I am glad you share my opinion.
+kontrolna	right	affirmation	Affirmative-neutral 5	Good that we came to similar conclusions.
+kontrolna	right	silence	Silence 1	What do you think about this? Do you agree with me?
+kontrolna	right	silence	Silence 2	I cannot hear you. Please tell me, what is your choice?
+kontrolna	right	silence	Silence 3	I would like to know your opinion. Which answer is closer to you?
+kontrolna	right	silence	Silence 4	What would you choose in this situation?
+kontrolna	right	silence	Silence 5	I need to know your decision - what do you choose?
+kontrolna	right	misc	NO AGREEMENT	We did not reach an agreement.
+kontrolna	right	misc	WHICH ANSWER	What is your final answer?
+kontrolna	right	off_topic	Off topic 1	It seems this is not the topic of our cooperation. What is your answer?
+kontrolna	right	off_topic	Off topic 2	We can talk about that later. Please tell me what your choice is.
+kontrolna	right	off_topic	Off topic 3	That is interesting. But can we return to our task? What is your answer?
+kontrolna	right	off_topic	Off topic 4	That is a good lead, but it does not concern the current topic. What is your answer in this matter?
+kontrolna	right	off_topic	Off topic 5	Interesting digression, but let us try to close the current topic. What do you choose?

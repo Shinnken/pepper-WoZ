@@ -1,12 +1,9 @@
-import socket
 import tkinter
 import tkinter.messagebox
 import customtkinter
 import os
 import csv
-import threading
 from pepper_app_socket_manager import SocketManager
-from ssh_deploy_remote import deploy_remote
 
 customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
@@ -18,6 +15,7 @@ class App(customtkinter.CTk):
         self.socket_manager = socket_manager
         self.ssh_manager = None
         self.manual_connection = manual_connection
+        self.demo_mode = True
 
         self._init_state()
         self._configure_window()
@@ -33,23 +31,17 @@ class App(customtkinter.CTk):
     def connect(self):
         ip_value = self.ip_entry.get().strip()
         if not ip_value:
-            tkinter.messagebox.showerror("Error", "Please enter an IP address")
+            tkinter.messagebox.showerror(self._t("error_title"), self._t("enter_ip"))
             return
 
         self._set_button_state(self.connect_button, "disabled")
         self.loading_bar.configure(mode="indeterminate")
         self.loading_bar.start()
-
-        threading.Thread(
-            target=self._threaded_connect,
-            args=(ip_value,),
-            daemon=True,
-        ).start()
+        self.after(350, self._handle_connection_success)
 
     def say_text(self):
         text = self.large_textbox.get("0.0", "end")
         pending_button = getattr(self, "_pending_template_button", None)
-        self.socket_manager.handle_command("speak", text)
         if pending_button is not None:
             self._mark_template_button_used(pending_button)
             self._pending_template_button = None
@@ -58,32 +50,34 @@ class App(customtkinter.CTk):
         if getattr(self, "_stop_in_progress", False):
             print("Stop already in progress; ignoring toggle.")
             return
-        is_starting = self.record_toggle_button.cget("text") == "Record"
+        is_starting = not self.is_recording
         if is_starting:
             patient_id = self.id_entry.get().strip()
             if not patient_id:
-                tkinter.messagebox.showerror("Error", "Please enter a Patient ID")
+                tkinter.messagebox.showerror(self._t("error_title"), self._t("enter_patient_id"))
                 return
-            self.socket_manager.handle_command("start", patient_id)
+            self.is_recording = True
             self.record_toggle_button.configure(
-                text="Stop",
+                text=self._t("record_stop"),
                 fg_color="red",
                 hover_color="#8B0000",
             )
             self.loading_bar.configure(mode="indeterminate")
             self.loading_bar.start()
+            self.after(300, self._finish_recording_start)
             return
 
         self._stop_in_progress = True
         self._set_button_state(self.record_toggle_button, "disabled")
         self.loading_bar.configure(mode="indeterminate")
         self.loading_bar.start()
-        threading.Thread(target=self._async_stop_recording, daemon=True).start()
+        self.after(400, lambda: self._finish_stop_recording(None))
 
     def toggle_id_mode(self):
-        self.id_mode = "GRUPA EKSPERYMENTALNA" if self.id_mode == "GRUPA KONTROLNA" else "GRUPA KONTROLNA"
-        self.id_mode_button.configure(text=self.id_mode)
+        self.id_mode_key = "experimental" if self.id_mode_key == "control" else "control"
+        self.id_mode_button.configure(text=self._get_id_mode_label())
         self._default_template_set = self._current_template_set_key()
+        self._refresh_dialogue_layout()
 
     def show_start_frame(self):
         self.problems_frame.grid_remove()
@@ -146,88 +140,49 @@ class App(customtkinter.CTk):
             self.button_font = customtkinter.CTkFont(size=resolved_size)
 
     def close_app(self):
-        self.socket_manager.handle_command("exit")
         self.destroy()
         print("Application closed.")
 
     def toggle_power(self):
-        turning_off = self.power_button.cget("text") == "Wyłącz"
-        command = "sleep" if turning_off else "wake"
-        try:
-            self.socket_manager.handle_command(command)
-        except Exception as exc:
-            tkinter.messagebox.showerror("Power command failed", str(exc))
-            return
-
-        if turning_off:
+        self.power_is_on = not self.power_is_on
+        if self.power_is_on:
             self.power_button.configure(
-                text="Włącz",
-                fg_color="#006400",
-                hover_color="#004d00",
-            )
-        else:
-            self.power_button.configure(
-                text="Wyłącz",
+                text=self._t("power_turn_off"),
                 fg_color="#c96100",
                 hover_color="#9f4c00",
             )
+        else:
+            self.power_button.configure(
+                text=self._t("power_turn_on"),
+                fg_color="#006400",
+                hover_color="#004d00",
+            )
+
+    def _finish_recording_start(self):
+        self.loading_bar.stop()
+        self.loading_bar.configure(mode="determinate")
+        self.loading_bar.set(1)
 
     def _async_stop_recording(self):
-        error_message = None
-        try:
-            self.socket_manager.handle_command("stop")
-        except Exception as exc:
-            error_message = str(exc)
-        finally:
-            self.after(0, lambda: self._finish_stop_recording(error_message))
+        self.after(0, lambda: self._finish_stop_recording(None))
 
     def _finish_stop_recording(self, error_message=None):
+        self.is_recording = False
         self._stop_in_progress = False
         self.loading_bar.stop()
         self.loading_bar.configure(mode="determinate")
         self.loading_bar.set(1)
         self.record_toggle_button.configure(
-            text="Record",
+            text=self._t("record_start"),
             fg_color="green",
             hover_color="#006400",
         )
         self._set_button_state(self.record_toggle_button, "normal")
         if error_message:
-            tkinter.messagebox.showerror("Stop failed", error_message)
-
-    def _threaded_connect(self, ip_value):
-        try:
-            try:
-                self.socket_manager.start()
-            except socket.timeout:
-                self.after(0, lambda: tkinter.messagebox.showerror("Error", "Socket start timed out. Check connection."))
-                return
-            except Exception as exc:
-                error_message = f"Socket start error: {exc}"
-                self.after(0, lambda msg=error_message: tkinter.messagebox.showerror("Error", msg))
-                return
-
-            if not self.manual_connection:
-                deploy_remote(ip_value)
-
-            try:
-                self.socket_manager.tcp_socket.accept_connection()
-            except socket.timeout:
-                self.after(0, lambda: tkinter.messagebox.showerror("Error", "Socket accept timed out. Pepper app not started?"))
-                return
-            except Exception as exc:
-                error_message = f"Socket accept error: {exc}"
-                self.after(0, lambda msg=error_message: tkinter.messagebox.showerror("Error", msg))
-                return
-
-            self.after(0, self._handle_connection_success)
-        except Exception as exc:
-            error_message = f"Connection failed: {exc}"
-            self.after(0, lambda msg=error_message: tkinter.messagebox.showerror("Error", msg))
-            self.after(0, self._re_enable_connect_button)
+            tkinter.messagebox.showerror(self._t("stop_failed_title"), error_message)
 
     def _handle_connection_success(self):
-        tkinter.messagebox.showinfo("Success", "Connection established successfully!")
+        tkinter.messagebox.showinfo(self._t("success_title"), self._t("connect_success_message"))
         self._set_button_state(self.say_button, "normal")
         self._set_button_state(self.record_toggle_button, "normal")
         self.loading_bar.stop()
@@ -239,6 +194,52 @@ class App(customtkinter.CTk):
         self._set_button_state(self.connect_button, "normal")
 
     def _init_state(self):
+        self.language = "en"
+        self._language_values = {"English": "en", "中文": "zh"}
+        self._language_codes = {value: key for key, value in self._language_values.items()}
+        self._translations = {
+            "en": {
+                "window_title": "Pepper UI Demo",
+                "error_title": "Error",
+                "success_title": "Success",
+                "stop_failed_title": "Stop failed",
+                "enter_ip": "Please enter an IP address",
+                "enter_patient_id": "Please enter a Patient ID",
+                "connect_demo": "Start UI Demo",
+                "id_label": "Patient ID:",
+                "mode_control": "CONTROL GROUP",
+                "mode_experimental": "EXPERIMENTAL GROUP",
+                "power_turn_off": "Turn Off",
+                "power_turn_on": "Turn On",
+                "record_start": "Record",
+                "record_stop": "Stop",
+                "say": "Say",
+                "tab_intro": "Intro + Closing",
+                "tab_dilemmas": "Dilemmas",
+                "connect_success_message": "Demo mode enabled. Robot functionality is disabled.",
+            },
+            "zh": {
+                "window_title": "Pepper 界面演示",
+                "error_title": "错误",
+                "success_title": "成功",
+                "stop_failed_title": "停止失败",
+                "enter_ip": "请输入 IP 地址",
+                "enter_patient_id": "请输入受试者 ID",
+                "connect_demo": "启动界面演示",
+                "id_label": "受试者 ID：",
+                "mode_control": "对照组",
+                "mode_experimental": "实验组",
+                "power_turn_off": "关闭",
+                "power_turn_on": "开启",
+                "record_start": "录制",
+                "record_stop": "停止",
+                "say": "发送",
+                "tab_intro": "介绍 + 结束",
+                "tab_dilemmas": "两难题",
+                "connect_success_message": "已启用演示模式。机器人功能已禁用。",
+            },
+        }
+
         self.say_textbox_font_size = 18
         self.say_textbox_font = customtkinter.CTkFont(size=self.say_textbox_font_size)
         self.say_textbox_allow_typing = False
@@ -249,11 +250,14 @@ class App(customtkinter.CTk):
         self.button_font_size = 18
         self.button_font = customtkinter.CTkFont(size=self.button_font_size)
 
-        self.id_mode = "GRUPA KONTROLNA"
+        self.id_mode_key = "control"
         self._id_mode_to_set = {
-            "GRUPA KONTROLNA": "kontrolna",
-            "GRUPA EKSPERYMENTALNA": "badawcza",
+            "control": "kontrolna",
+            "experimental": "badawcza",
         }
+
+        self.power_is_on = True
+        self.is_recording = False
 
         self._used_button_fg_color = ("#f9cb4d", "#a87b0f")
         self._used_button_hover_color = ("#f0b928", "#8f670d")
@@ -271,7 +275,7 @@ class App(customtkinter.CTk):
             self._windowing_system = ""
 
     def _configure_window(self):
-        self.title("Pepper App")
+        self.title(self._t("window_title"))
         self.geometry("1100x580")
         self.after(0, self._maximize_window)
         self.protocol("WM_DELETE_WINDOW", self.close_app)
@@ -291,15 +295,28 @@ class App(customtkinter.CTk):
         self.ip_entry.insert(0, "192.168.1.102")
         self.ip_entry.grid(row=0, column=0, padx=20, pady=20, sticky="w")
 
+        self.connect_lang_frame = customtkinter.CTkFrame(self)
+        self.connect_lang_frame.grid(row=0, column=1, padx=20, pady=20, sticky="ew")
+        self.connect_lang_frame.grid_columnconfigure(0, weight=1)
+
         self.connect_button = self._create_button(
-            self,
-            text="Połącz z Robotem",
+            self.connect_lang_frame,
+            text=self._t("connect_demo"),
             font=self.button_font,
             command=self.connect,
         )
-        self.connect_button.grid(row=0, column=1, padx=20, pady=20, sticky="w")
+        self.connect_button.grid(row=0, column=0, padx=0, pady=(0, 8), sticky="ew")
 
-        self.id_label = customtkinter.CTkLabel(self, text="ID Pacjenta:")
+        self.language_selector = customtkinter.CTkSegmentedButton(
+            self.connect_lang_frame,
+            values=list(self._language_values.keys()),
+            command=self._on_language_change,
+            font=self.button_font,
+        )
+        self.language_selector.grid(row=1, column=0, padx=0, pady=0, sticky="ew")
+        self.language_selector.set(self._language_codes[self.language])
+
+        self.id_label = customtkinter.CTkLabel(self, text=self._t("id_label"))
         self.id_label.grid(row=0, column=2, padx=(20, 5), pady=20, sticky="e")
 
         self.id_entry = customtkinter.CTkEntry(self, width=150)
@@ -312,7 +329,7 @@ class App(customtkinter.CTk):
 
         self.id_mode_button = self._create_button(
             self.mode_power_frame,
-            text=self.id_mode,
+            text=self._get_id_mode_label(),
             width=300,
             height=30,
             font=self.button_font,
@@ -322,7 +339,7 @@ class App(customtkinter.CTk):
 
         self.power_button = self._create_button(
             self.mode_power_frame,
-            text="Wyłącz",
+            text=self._t("power_turn_off"),
             width=300,
             height=30,
             font=self.button_font,
@@ -333,7 +350,7 @@ class App(customtkinter.CTk):
 
         self.record_toggle_button = self._create_button(
             self,
-            text="Record",
+            text=self._t("record_start"),
             fg_color="green",
             hover_color="#006400",
             width=400,
@@ -354,7 +371,7 @@ class App(customtkinter.CTk):
 
         self.say_button = self._create_button(
             self,
-            text="Say",
+            text=self._t("say"),
             width=120,
             height=40,
             font=self.button_font,
@@ -368,12 +385,15 @@ class App(customtkinter.CTk):
         self._set_button_state(self.say_button, "disabled")
 
     def _load_button_templates(self):
-        self.button_template_path = os.path.join(os.path.dirname(__file__), "button_layout_template.tsv")
+        template_file_name = "button_layout_template_en.tsv" if self.language == "en" else "button_layout_template_zh.tsv"
+        self.button_template_path = os.path.join(os.path.dirname(__file__), template_file_name)
+        if not os.path.exists(self.button_template_path):
+            self.button_template_path = os.path.join(os.path.dirname(__file__), "button_layout_template_en.tsv")
         self.button_definitions, available_sets = self._load_button_definitions(self.button_template_path)
         self._available_button_sets = tuple(available_sets)
         self._available_button_sets_set = set(self._available_button_sets)
 
-        initial_set = (self._id_mode_to_set.get(self.id_mode, "") or "").strip().lower()
+        initial_set = (self._id_mode_to_set.get(self.id_mode_key, "") or "").strip().lower()
         if initial_set and initial_set in self._available_button_sets_set:
             self._default_template_set = initial_set
         elif self._available_button_sets:
@@ -395,7 +415,7 @@ class App(customtkinter.CTk):
 
         self.wstep_button = self._create_button(
             toggle_frame,
-            text="Wstęp + Zakończenie",
+            text=self._t("tab_intro"),
             font=self.button_font,
             command=self.show_start_frame,
         )
@@ -403,7 +423,7 @@ class App(customtkinter.CTk):
 
         self.dylematy_button = self._create_button(
             toggle_frame,
-            text="Dylematy",
+            text=self._t("tab_dilemmas"),
             font=self.button_font,
             command=self.show_problems_frame,
         )
@@ -575,23 +595,82 @@ class App(customtkinter.CTk):
         return definitions, tuple(ordered_sets)
 
     def _current_template_set_key(self):
-        mapped = (self._id_mode_to_set.get(self.id_mode, "") or "").strip().lower()
+        mapped = (self._id_mode_to_set.get(self.id_mode_key, "") or "").strip().lower()
         if mapped and mapped in self._available_button_sets_set:
             return mapped
         if mapped and mapped in self._available_button_sets:
             return mapped
-
-        derived = (self.id_mode or "").strip().lower()
-        if derived and derived in self._available_button_sets_set:
-            return derived
-        if derived and derived in self._available_button_sets:
-            return derived
 
         if self._default_template_set:
             return self._default_template_set
         if self._available_button_sets:
             return self._available_button_sets[0]
         return "default"
+
+    def _t(self, key: str) -> str:
+        return self._translations.get(self.language, {}).get(key, key)
+
+    def _get_id_mode_label(self) -> str:
+        if self.id_mode_key == "experimental":
+            return self._t("mode_experimental")
+        return self._t("mode_control")
+
+    def _on_language_change(self, value: str):
+        new_language = self._language_values.get(value, "en")
+        if new_language == self.language:
+            return
+
+        self.language = new_language
+        self._apply_language_texts()
+        self._refresh_dialogue_layout()
+
+    def _apply_language_texts(self):
+        self.title(self._t("window_title"))
+
+        if hasattr(self, "connect_button"):
+            self.connect_button.configure(text=self._t("connect_demo"))
+        if hasattr(self, "id_label"):
+            self.id_label.configure(text=self._t("id_label"))
+        if hasattr(self, "id_mode_button"):
+            self.id_mode_button.configure(text=self._get_id_mode_label())
+        if hasattr(self, "power_button"):
+            if self.power_is_on:
+                self.power_button.configure(text=self._t("power_turn_off"), fg_color="#c96100", hover_color="#9f4c00")
+            else:
+                self.power_button.configure(text=self._t("power_turn_on"), fg_color="#006400", hover_color="#004d00")
+        if hasattr(self, "record_toggle_button"):
+            record_text = self._t("record_stop") if self.is_recording else self._t("record_start")
+            self.record_toggle_button.configure(text=record_text)
+        if hasattr(self, "say_button"):
+            self.say_button.configure(text=self._t("say"))
+        if hasattr(self, "wstep_button"):
+            self.wstep_button.configure(text=self._t("tab_intro"))
+        if hasattr(self, "dylematy_button"):
+            self.dylematy_button.configure(text=self._t("tab_dilemmas"))
+
+    def _refresh_dialogue_layout(self):
+        self._load_button_templates()
+
+        current_problem_index = getattr(self, "active_problem_index", 0)
+        was_problems_view = False
+        problems_frame = getattr(self, "problems_frame", None)
+        if problems_frame is not None:
+            try:
+                was_problems_view = bool(problems_frame.winfo_ismapped())
+            except tkinter.TclError:
+                was_problems_view = False
+
+        dialogue_container = getattr(self, "dialogue_container", None)
+        if dialogue_container is not None:
+            dialogue_container.destroy()
+
+        self._build_dialogue_layout()
+        if was_problems_view:
+            self.show_problems_frame()
+            self.show_problem_subframe(current_problem_index)
+        else:
+            self.show_start_frame()
+        self._equalize_left_panel_width()
 
     def _resolve_entry_value(self, entry):
         values = entry.get("values") or {}
