@@ -316,7 +316,7 @@ class App(customtkinter.CTk):
 
     def _build_top_controls(self):
         self.ip_entry = customtkinter.CTkEntry(self)
-        self.ip_entry.insert(0, "192.168.1.102")
+        self.ip_entry.insert(0, "nao.local")
         self.ip_entry.grid(row=0, column=0, padx=20, pady=20, sticky="w")
 
         self.connect_button = self._create_button(

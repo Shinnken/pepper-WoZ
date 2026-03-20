@@ -20,7 +20,8 @@ class TCPSocketHandler:
 
     def start(self) -> None | tuple[str, int]:
         self.socket.listen(1)
-        self.socket.settimeout(10)  # Set a timeout for the accept call
+        accept_timeout = float(os.getenv("PEPPER_TCP_ACCEPT_TIMEOUT_SEC", "10"))
+        self.socket.settimeout(accept_timeout)  # Set a timeout for the accept call
 
     def accept_connection(self):
         self.conn, addr = self.socket.accept()
