@@ -4,6 +4,8 @@ from video_maker_old import make_video_from_frames
 import time
 import os
 import struct
+import wave
+import io
 
 class TCPSocketHandler:
     """
@@ -18,7 +20,8 @@ class TCPSocketHandler:
 
     def start(self) -> None | tuple[str, int]:
         self.socket.listen(1)
-        self.socket.settimeout(10)  # Set a timeout for the accept call
+        accept_timeout = float(os.getenv("PEPPER_TCP_ACCEPT_TIMEOUT_SEC", "10"))
+        self.socket.settimeout(accept_timeout)  # Set a timeout for the accept call
 
     def accept_connection(self):
         self.conn, addr = self.socket.accept()
@@ -126,7 +129,8 @@ class UDPSocketHandler(threading.Thread):
         env_flag = os.getenv('PEPPER_MUX_AUDIO', '1').strip().lower()
         self.mux_audio = env_flag not in ('0', 'false', 'no', 'off')
         # If PEPPER_TCP_AUDIO=1, we won't receive audio via UDP; instead, TCPSocketHandler will deliver it.
-        tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '1').strip().lower()
+        # Default to UDP audio; TCP audio can be re-enabled via PEPPER_TCP_AUDIO=1
+        tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '0').strip().lower()
         self.use_udp_audio = tcp_audio_flag in ('0', 'false', 'no', 'off')
         self._frame_header = struct.Struct('!QI')
         self._last_frame_ts = None
@@ -135,6 +139,29 @@ class UDPSocketHandler(threading.Thread):
             self._timestamp_reset_threshold = int(os.getenv('PEPPER_TS_RESET_DELTA_US', '1000000000'))
         except Exception:
             self._timestamp_reset_threshold = 1000000000
+        self._tcp_handler = None
+        self._stall_stop_attempted = False
+        self._stalled_capture = False
+        self._stall_notifier = None
+        self._stall_notified = False
+        self._saving_notifier = None
+        self._trim_tail_seconds = 12.0
+
+    def attach_tcp_handler(self, tcp_handler: TCPSocketHandler):
+        self._tcp_handler = tcp_handler
+
+    def set_stall_notifier(self, callback):
+        self._stall_notifier = callback
+
+    def set_saving_notifier(self, callback):
+        self._saving_notifier = callback
+
+    def _notify_saving(self, saving: bool):
+        if self._saving_notifier:
+            try:
+                self._saving_notifier(saving)
+            except Exception as exc:
+                print(f"Saving notifier callback failed: {exc}")
 
     def set_patient_id(self, patient_id: int):
         self.patient_id = patient_id
@@ -154,10 +181,107 @@ class UDPSocketHandler(threading.Thread):
         self._audio_bytes_accum = 0
         self._last_frame_ts = None
         self._reset_requested = True
+        self._stall_stop_attempted = False
+        self._stalled_capture = False
+        self._stall_notified = False
         self.listening = True
 
+    def _stop_and_collect_over_tcp(self) -> bool:
+        """
+        Trigger stop over TCP when UDP capture stalls, then pull frame count and optional audio.
+        Returns True if the stop command was issued successfully (even if audio still pending).
+        """
+        if self._tcp_handler is None or not hasattr(self._tcp_handler, "conn"):
+            print("Cannot send stop on stall: TCP handler not attached or no connection.")
+            return False
+        try:
+            self._tcp_handler.send(b"stop")
+            print("Sent stop over TCP due to stall")
+        except Exception as exc:
+            print(f"Failed to send stop over TCP on stall: {exc}")
+            return False
+        try:
+            header = self._tcp_handler.receive_line(timeout=30.0)
+            if not header:
+                print("Timeout waiting for frame count over TCP after stall stop.")
+                return True
+            try:
+                frames_left = int(header.decode('utf-8', errors='strict').strip())
+            except Exception:
+                s = ''.join(ch for ch in header.decode('utf-8', errors='ignore') if ch.isdigit())
+                frames_left = int(s) if s else 0
+            self.frames_countdown = frames_left
+            print(f"Frames left (stall stop): {frames_left}")
+            self._last_packet_ts = time.time()
+            tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '1').strip().lower()
+            use_tcp_audio = tcp_audio_flag not in ('0', 'false', 'no', 'off')
+            if use_tcp_audio:
+                header = self._tcp_handler.receive_line(timeout=5.0)
+                if not header:
+                    print("No audio header over TCP after stall stop; will rely on UDP or none.")
+                    return True
+                header_s = header.decode('utf-8', errors='ignore').strip()
+                if header_s == 'AUDIO_NONE':
+                    self.audio_bytes = None
+                    self.audio_done = True
+                    print("TCP reported no audio after stall stop.")
+                    return True
+                if header_s.startswith('AUDIO_LEN:'):
+                    try:
+                        n = int(header_s.split(':', 1)[1])
+                    except Exception:
+                        n = -1
+                    if n is None or n < 0 or n > (64 * 1024 * 1024):
+                        print(f"Invalid audio length over TCP after stall stop: {header_s}")
+                        return True
+                    data = self._tcp_handler.receive_exact(n, timeout=max(10.0, n / (64 * 1024.0)))
+                    if data is None:
+                        print("Failed to receive full audio over TCP after stall stop; will finalize without or rely on UDP.")
+                        return True
+                    self.audio_bytes = data
+                    self.audio_done = True
+                    print(f"Audio received over TCP after stall stop: {len(data)} bytes")
+            return True
+        except Exception as exc:
+            print(f"Failed to complete stop over TCP on stall: {exc}")
+            return True
+
+    def _notify_stall_once(self):
+        if self._stall_notified:
+            return
+        self._stall_notified = True
+        if self._stall_notifier:
+            try:
+                self._stall_notifier()
+            except Exception as exc:
+                print(f"Stall notifier callback failed: {exc}")
+
+    def _trim_audio_tail(self, audio_bytes: bytes, seconds: float) -> bytes | None:
+        if not audio_bytes or seconds <= 0:
+            return audio_bytes
+        try:
+            with wave.open(io.BytesIO(audio_bytes), 'rb') as wf:
+                framerate = wf.getframerate()
+                nframes = wf.getnframes()
+                frames_to_keep = max(0, nframes - int(framerate * seconds))
+                wf.rewind()
+                data = wf.readframes(frames_to_keep)
+                buf = io.BytesIO()
+                with wave.open(buf, 'wb') as out:
+                    out.setnchannels(wf.getnchannels())
+                    out.setsampwidth(wf.getsampwidth())
+                    out.setframerate(framerate)
+                    out.writeframes(data)
+                trimmed = buf.getvalue()
+                print(f"Trimmed audio tail by {seconds}s: {len(audio_bytes)} -> {len(trimmed)} bytes")
+                return trimmed
+        except Exception as exc:
+            print(f"Failed to trim audio tail: {exc}")
+        return audio_bytes
+
     def run(self):
-        RECV_SIZE = 1400
+        # Allow for prefixed packets (1 extra byte) and small overhead
+        RECV_SIZE = 1300
         self.running = True
         bytes_received = bytearray()
         receiving_audio = False
@@ -177,33 +301,49 @@ class UDPSocketHandler(threading.Thread):
             need_more_video = (self.frames_countdown != 0) or (len(bytes_received) > 0)
             need_more_audio = (not self.audio_done)
             now = time.time()
+            if self._stalled_capture and self.frames_countdown > 0 and self._last_packet_ts is not None:
+                if now - self._last_packet_ts > 2.5:
+                    print("Stall finalize: no UDP frames after forced stop; closing remaining countdown.")
+                    self.frames_countdown = 0
+                    if self._frames_zero_at is None:
+                        self._frames_zero_at = now
             # If frames finished but audio hasn’t arrived for a while, finalize without audio (graceful timeout)
             if (self.frames_countdown == 0) and (not self.audio_done) and self._frames_zero_at is not None:
                 # Longer timeout before audio starts
                 no_audio_yet = not receiving_audio and (now - self._frames_zero_at > 10.0)
                 # If audio started but stalled (no packets), allow stall timeout
                 stalled = receiving_audio and (self._last_packet_ts is not None) and (now - self._last_packet_ts > 8.0)
-                if no_audio_yet:
-                    if self._pre_audio_bytes > 0:
-                        # Assume start marker lost; promote pre-audio to real audio
-                        print("Promoting pre-audio buffer ({} bytes) to audio due to missing AUDIO_START.".format(self._pre_audio_bytes))
-                        audio_buf = b"".join(self._pre_audio_chunks)
-                        self._pre_audio_chunks = []
-                        self._pre_audio_bytes = 0
-                        self.audio_bytes = audio_buf
-                        self.audio_done = True
-                    else:
-                        print("Audio timed out waiting to start; finalizing without audio.")
-                        self.audio_done = True
-                elif stalled:
-                    # If we accumulated any audio, finalize with what we have (assume AUDIO_END lost)
-                    if self._audio_bytes_accum > 0:
-                        print("Audio stalled after start; finalizing with {} bytes (missing AUDIO_END).".format(self._audio_bytes_accum))
-                        self.audio_bytes = audio_buf
-                        self.audio_done = True
-                    else:
-                        print("Audio stalled with no data; finalizing without audio.")
-                        self.audio_done = True
+                if no_audio_yet or stalled:
+                    if not self._stalled_capture:
+                        self._stalled_capture = True
+                        self._notify_stall_once()
+                    if not self._stall_stop_attempted:
+                        self._stall_stop_attempted = True
+                        if self._stop_and_collect_over_tcp():
+                            # Give the sender time to push audio after the forced stop
+                            self._frames_zero_at = time.time()
+                            continue
+                    if no_audio_yet:
+                        if self._pre_audio_bytes > 0:
+                            # Assume start marker lost; promote pre-audio to real audio
+                            print("Promoting pre-audio buffer ({} bytes) to audio due to missing AUDIO_START.".format(self._pre_audio_bytes))
+                            audio_buf = b"".join(self._pre_audio_chunks)
+                            self._pre_audio_chunks = []
+                            self._pre_audio_bytes = 0
+                            self.audio_bytes = audio_buf
+                            self.audio_done = True
+                        else:
+                            print("Audio timed out waiting to start; finalizing without audio.")
+                            self.audio_done = True
+                    elif stalled:
+                        # If we accumulated any audio, finalize with what we have (assume AUDIO_END lost)
+                        if self._audio_bytes_accum > 0:
+                            print("Audio stalled after start; finalizing with {} bytes (missing AUDIO_END).".format(self._audio_bytes_accum))
+                            self.audio_bytes = audio_buf
+                            self.audio_done = True
+                        else:
+                            print("Audio stalled with no data; finalizing without audio.")
+                            self.audio_done = True
             # If frame count is unknown (<0) but we received at least one frame and saw no packets recently,
             # assume frames are done and arm audio timeout
             if (self.frames_countdown < 0) and (len(self.frames) > 0) and (self._last_packet_ts is not None):
@@ -264,6 +404,39 @@ class UDPSocketHandler(threading.Thread):
                     print("No audio will be received")
                     continue
 
+                # Demux prefixed packets (new protocol)
+                if data == b"END":
+                    if bytes_received:
+                        frame_blob = bytes(bytes_received)
+                        bytes_received.clear()
+                        self._handle_frame_blob(frame_blob, suffix="")
+                    else:
+                        print("Warning: received END without frame data; skipping")
+                    if self.frames_countdown < 0:
+                        pass
+                    continue
+
+                if data.startswith(b"A") and self.use_udp_audio and data not in (b"AUDIO_START", b"AUDIO_END", b"AUDIO_NONE"):
+                    payload = data[1:]
+                    if payload:
+                        if not receiving_audio:
+                            receiving_audio = True
+                            self._audio_chunks = 0
+                            self._audio_bytes_accum = 0
+                        audio_buf += payload
+                        self._audio_chunks += 1
+                        self._audio_bytes_accum += len(payload)
+                        if (self._audio_chunks % 50) == 0:
+                            print("Audio receiving... {} bytes so far".format(self._audio_bytes_accum))
+                    continue
+
+                if data.startswith(b"V"):
+                    payload = data[1:]
+                    if payload:
+                        bytes_received += payload
+                        print(f"udp thread received {len(payload)} bytes")
+                    continue
+
                 if self.use_udp_audio and receiving_audio:
                     audio_buf += data
                     self._audio_chunks += 1
@@ -309,8 +482,14 @@ class UDPSocketHandler(threading.Thread):
                 # nie ma juz klatek do odbioru
                 # trzeba przygotować filmik z tego co jest (audio_done == True here)
                 print("Finalizing: frames={}, audio={} bytes".format(len(self.frames), 0 if self.audio_bytes is None else len(self.audio_bytes)))
+                audio_payload = self._wrap_audio_if_pcm(self.audio_bytes)
+                if self._stalled_capture and audio_payload:
+                    trimmed = self._trim_audio_tail(audio_payload, self._trim_tail_seconds)
+                    audio_payload = trimmed if trimmed is not None else audio_payload
+                self._notify_saving(True)
                 self.listening = False
-                make_video_from_frames(self.frames, self.patient_id, self.audio_bytes, self.mux_audio)
+                make_video_from_frames(self.frames, self.patient_id, audio_payload, self.mux_audio)
+                self._notify_saving(False)
                 self.frames_countdown = -1
                 self.frames = []
                 self.audio_bytes = None
@@ -377,4 +556,25 @@ class UDPSocketHandler(threading.Thread):
             elif self.frames_countdown == 0 and self._frames_zero_at is None:
                 self._frames_zero_at = time.time()
         return frame_entry is not None
+
+    def _wrap_audio_if_pcm(self, audio_bytes: bytes | None) -> bytes | None:
+        """Ensure audio is WAV; if raw PCM mono16@48k, wrap into WAV."""
+        if not audio_bytes:
+            return None
+        if len(audio_bytes) >= 4 and audio_bytes[:4] == b"RIFF":
+            return audio_bytes
+        try:
+            import io
+            import wave
+
+            buf = io.BytesIO()
+            with wave.open(buf, 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(48000)
+                wf.writeframes(audio_bytes)
+            return buf.getvalue()
+        except Exception as exc:
+            print(f"Failed to wrap PCM audio into WAV: {exc}")
+            return audio_bytes
 

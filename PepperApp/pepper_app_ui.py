@@ -1,9 +1,12 @@
+import socket
 import tkinter
 import tkinter.messagebox
 import customtkinter
 import os
 import csv
+import threading
 from pepper_app_socket_manager import SocketManager
+from ssh_deploy_remote import deploy_remote
 
 customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
@@ -15,7 +18,6 @@ class App(customtkinter.CTk):
         self.socket_manager = socket_manager
         self.ssh_manager = None
         self.manual_connection = manual_connection
-        self.demo_mode = True
 
         self._init_state()
         self._configure_window()
@@ -23,6 +25,19 @@ class App(customtkinter.CTk):
         self._load_button_templates()
         self._build_dialogue_layout()
         self._bind_global_events()
+
+        # Notify user if recording stalls and capture cannot recover.
+        if self.socket_manager is not None:
+            try:
+                self.socket_manager.set_stall_notifier(self._on_capture_stall)
+            except Exception:
+                pass
+
+            # Notify UI while video is being saved/muxed.
+            try:
+                self.socket_manager.set_saving_notifier(self._on_saving_state_threadsafe)
+            except Exception:
+                pass
 
         self.loading_bar.set(0)
         self.show_start_frame()
@@ -37,11 +52,18 @@ class App(customtkinter.CTk):
         self._set_button_state(self.connect_button, "disabled")
         self.loading_bar.configure(mode="indeterminate")
         self.loading_bar.start()
-        self.after(350, self._handle_connection_success)
+
+        threading.Thread(
+            target=self._threaded_connect,
+            args=(ip_value,),
+            daemon=True,
+        ).start()
 
     def say_text(self):
         text = self.large_textbox.get("0.0", "end")
         pending_button = getattr(self, "_pending_template_button", None)
+        if self.socket_manager is not None:
+            self.socket_manager.handle_command("speak", text)
         if pending_button is not None:
             self._mark_template_button_used(pending_button)
             self._pending_template_button = None
@@ -56,6 +78,8 @@ class App(customtkinter.CTk):
             if not patient_id:
                 tkinter.messagebox.showerror(self._t("error_title"), self._t("enter_patient_id"))
                 return
+            if self.socket_manager is not None:
+                self.socket_manager.handle_command("start", patient_id)
             self.is_recording = True
             self.record_toggle_button.configure(
                 text=self._t("record_stop"),
@@ -71,7 +95,7 @@ class App(customtkinter.CTk):
         self._set_button_state(self.record_toggle_button, "disabled")
         self.loading_bar.configure(mode="indeterminate")
         self.loading_bar.start()
-        self.after(400, lambda: self._finish_stop_recording(None))
+        threading.Thread(target=self._async_stop_recording, daemon=True).start()
 
     def toggle_id_mode(self):
         self.id_mode_key = "experimental" if self.id_mode_key == "control" else "control"
@@ -140,11 +164,63 @@ class App(customtkinter.CTk):
             self.button_font = customtkinter.CTkFont(size=resolved_size)
 
     def close_app(self):
+        if self.socket_manager is not None:
+            self.socket_manager.handle_command("exit")
         self.destroy()
         print("Application closed.")
 
+    def _on_capture_stall(self):
+        # Called from UDP thread; marshal to UI thread for popup.
+        self.after(0, lambda: tkinter.messagebox.showwarning(
+            self._t("recording_stalled_title"),
+            self._t("recording_stalled_message")
+        ))
+
+    def _on_saving_state_threadsafe(self, saving: bool):
+        self.after(0, lambda: self._on_saving_state(saving))
+
+    def _on_saving_state(self, saving: bool):
+        if saving:
+            if getattr(self, "_saving_popup", None) is not None:
+                return
+            popup = customtkinter.CTkToplevel(self)
+            popup.title(self._t("saving_title"))
+            popup.geometry("320x120")
+            popup.resizable(False, False)
+            label = customtkinter.CTkLabel(popup, text=self._t("saving_message"))
+            label.pack(expand=True, padx=20, pady=20)
+            popup.protocol("WM_DELETE_WINDOW", lambda: None)
+            try:
+                popup.update_idletasks()
+                popup.grab_set()
+            except tkinter.TclError:
+                pass
+            self._saving_popup = popup
+            return
+
+        popup = getattr(self, "_saving_popup", None)
+        if popup is not None:
+            try:
+                popup.grab_release()
+            except Exception:
+                pass
+            try:
+                popup.destroy()
+            except Exception:
+                pass
+            self._saving_popup = None
+
     def toggle_power(self):
         self.power_is_on = not self.power_is_on
+        command = "sleep" if not self.power_is_on else "wake"
+        try:
+            if self.socket_manager is not None:
+                self.socket_manager.handle_command(command)
+        except Exception as exc:
+            self.power_is_on = not self.power_is_on
+            tkinter.messagebox.showerror(self._t("power_failed_title"), str(exc))
+            return
+
         if self.power_is_on:
             self.power_button.configure(
                 text=self._t("power_turn_off"),
@@ -164,7 +240,14 @@ class App(customtkinter.CTk):
         self.loading_bar.set(1)
 
     def _async_stop_recording(self):
-        self.after(0, lambda: self._finish_stop_recording(None))
+        error_message = None
+        try:
+            if self.socket_manager is not None:
+                self.socket_manager.handle_command("stop")
+        except Exception as exc:
+            error_message = str(exc)
+        finally:
+            self.after(0, lambda: self._finish_stop_recording(error_message))
 
     def _finish_stop_recording(self, error_message=None):
         self.is_recording = False
@@ -187,6 +270,46 @@ class App(customtkinter.CTk):
         self._set_button_state(self.record_toggle_button, "normal")
         self.loading_bar.stop()
         self.loading_bar.set(0)
+
+    def _threaded_connect(self, ip_value):
+        try:
+            if self.socket_manager is None:
+                self.after(0, lambda: tkinter.messagebox.showerror(self._t("error_title"), self._t("socket_manager_missing")))
+                self.after(0, self._re_enable_connect_button)
+                return
+
+            try:
+                self.socket_manager.start()
+            except socket.timeout:
+                self.after(0, lambda: tkinter.messagebox.showerror(self._t("error_title"), self._t("socket_start_timeout")))
+                self.after(0, self._re_enable_connect_button)
+                return
+            except Exception as exc:
+                error_message = self._t("socket_start_error").format(error=str(exc))
+                self.after(0, lambda msg=error_message: tkinter.messagebox.showerror(self._t("error_title"), msg))
+                self.after(0, self._re_enable_connect_button)
+                return
+
+            if not self.manual_connection:
+                deploy_remote(ip_value)
+
+            try:
+                self.socket_manager.tcp_socket.accept_connection()
+            except socket.timeout:
+                self.after(0, lambda: tkinter.messagebox.showerror(self._t("error_title"), self._t("socket_accept_timeout")))
+                self.after(0, self._re_enable_connect_button)
+                return
+            except Exception as exc:
+                error_message = self._t("socket_accept_error").format(error=str(exc))
+                self.after(0, lambda msg=error_message: tkinter.messagebox.showerror(self._t("error_title"), msg))
+                self.after(0, self._re_enable_connect_button)
+                return
+
+            self.after(0, self._handle_connection_success)
+        except Exception as exc:
+            error_message = self._t("connection_failed").format(error=str(exc))
+            self.after(0, lambda msg=error_message: tkinter.messagebox.showerror(self._t("error_title"), msg))
+            self.after(0, self._re_enable_connect_button)
 
     def _re_enable_connect_button(self):
         self.loading_bar.stop()
@@ -216,7 +339,18 @@ class App(customtkinter.CTk):
                 "say": "Say",
                 "tab_intro": "Intro + Closing",
                 "tab_dilemmas": "Dilemmas",
-                "connect_success_message": "Demo mode enabled. Robot functionality is disabled.",
+                "connect_success_message": "Connection established successfully!",
+                "saving_title": "Saving",
+                "saving_message": "Saving video, please wait.",
+                "power_failed_title": "Power command failed",
+                "recording_stalled_title": "Recording stalled",
+                "recording_stalled_message": "Recording stalled. Please restart the app and try again.",
+                "socket_manager_missing": "Socket manager is not configured.",
+                "socket_start_timeout": "Socket start timed out. Check connection.",
+                "socket_start_error": "Socket start error: {error}",
+                "socket_accept_timeout": "Socket accept timed out. Pepper app not started?",
+                "socket_accept_error": "Socket accept error: {error}",
+                "connection_failed": "Connection failed: {error}",
             },
             "zh": {
                 "window_title": "Pepper 界面演示",
@@ -236,7 +370,18 @@ class App(customtkinter.CTk):
                 "say": "发送",
                 "tab_intro": "介绍 + 结束",
                 "tab_dilemmas": "两难题",
-                "connect_success_message": "已启用演示模式。机器人功能已禁用。",
+                "connect_success_message": "连接成功建立！",
+                "saving_title": "保存中",
+                "saving_message": "视频正在保存，请稍候。",
+                "power_failed_title": "电源命令失败",
+                "recording_stalled_title": "录制已停止",
+                "recording_stalled_message": "录制卡住。请重启应用后重试。",
+                "socket_manager_missing": "未配置 Socket 管理器。",
+                "socket_start_timeout": "Socket 启动超时，请检查连接。",
+                "socket_start_error": "Socket 启动错误：{error}",
+                "socket_accept_timeout": "Socket 接收超时。Pepper 应用是否已启动？",
+                "socket_accept_error": "Socket 接收错误：{error}",
+                "connection_failed": "连接失败：{error}",
             },
         }
 
@@ -269,6 +414,7 @@ class App(customtkinter.CTk):
         self._window_icon_image = None
         self._pending_template_button = None
         self._stop_in_progress = False
+        self._saving_popup = None
         try:
             self._windowing_system = str(self.tk.call("tk", "windowingsystem"))
         except tkinter.TclError:

@@ -8,6 +8,8 @@ class SocketManager:
         self._port_udp = port_udp
         self.tcp_socket: TCPSocketHandler = TCPSocketHandler(host, port_tcp)
         self.udp_socket: UDPSocketHandler = UDPSocketHandler(host, port_udp)
+        self.udp_socket.attach_tcp_handler(self.tcp_socket)
+        self._stall_notifier = None
         self._udp_started = False
         
     def start(self):
@@ -18,9 +20,25 @@ class SocketManager:
         if self._udp_started and not self.udp_socket.is_alive():
             # Thread objects cannot be restarted, so create a fresh handler if needed.
             self.udp_socket = UDPSocketHandler(self._host, self._port_udp)
+            self.udp_socket.attach_tcp_handler(self.tcp_socket)
+            if self._stall_notifier:
+                self.udp_socket.set_stall_notifier(self._stall_notifier)
 
         self.udp_socket.start()
         self._udp_started = True
+
+    def set_stall_notifier(self, callback):
+        self._stall_notifier = callback
+        try:
+            self.udp_socket.set_stall_notifier(callback)
+        except Exception:
+            pass
+
+    def set_saving_notifier(self, callback):
+        try:
+            self.udp_socket.set_saving_notifier(callback)
+        except Exception:
+            pass
 
     
     def check_connection(self) -> bool:
@@ -79,7 +97,8 @@ class SocketManager:
         print(f"Frames left: {frames_left}")
         self.udp_socket.frames_countdown = frames_left
         # Optionally receive audio over TCP for reliability
-        tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '1').strip().lower()
+        # Default to UDP audio; set PEPPER_TCP_AUDIO=1 to force TCP audio download
+        tcp_audio_flag = os.getenv('PEPPER_TCP_AUDIO', '0').strip().lower()
         use_tcp_audio = tcp_audio_flag not in ('0', 'false', 'no', 'off')
         if use_tcp_audio:
             try:
