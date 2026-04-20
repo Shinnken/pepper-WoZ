@@ -49,14 +49,17 @@ class PepperSocketManager(object):
             data = await self.tcp_reader.read(1024)
             if not data:
                 break
-            command = data.decode("utf-8").strip()
-            if not command:
+            raw_command = data.decode("utf-8").strip()
+            if not raw_command:
                 continue
 
-            if len(command) > 6:
-                args = command[6:]
-                await self.pepper_camera.wez_powiedz(args)
-                command = command[:5]
+            command, argument = self._split_command(raw_command)
+            if command == "speak" and argument:
+                await self.pepper_camera.wez_powiedz(argument)
+                continue
+            if command == "lang" and argument:
+                await self.pepper_camera.ustaw_jezyk(argument)
+                continue
 
             print("received command:", command, " len:", len(self.pepper_camera.frames))
             if command == "start":
@@ -69,6 +72,12 @@ class PepperSocketManager(object):
                 await self.pepper_camera.wez_spij()
             elif command == "wake":
                 await self.pepper_camera.wez_wstawaj()
+
+    def _split_command(self, raw_command: str) -> tuple[str, str]:
+        parts = raw_command.split(" ", 1)
+        if len(parts) == 1:
+            return parts[0], ""
+        return parts[0], parts[1].strip()
 
     async def _handle_stop(self) -> None:
         await self.pepper_camera.stop_recording()

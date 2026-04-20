@@ -320,6 +320,14 @@ class App(customtkinter.CTk):
         self.language = "en"
         self._language_values = {"English": "en", "中文": "zh"}
         self._language_codes = {value: key for key, value in self._language_values.items()}
+        self._nao_language_by_code = {
+            "en": "English",
+            "zh": "Chinese",
+        }
+        self._language_switch_signal = {
+            "en": "Language changed to English.",
+            "zh": "语言已切换为中文。",
+        }
         self._translations = {
             "en": {
                 "window_title": "Pepper UI Demo",
@@ -328,7 +336,7 @@ class App(customtkinter.CTk):
                 "stop_failed_title": "Stop failed",
                 "enter_ip": "Please enter an IP address",
                 "enter_patient_id": "Please enter a Patient ID",
-                "connect_demo": "Start UI Demo",
+                "connect_demo": "Connect",
                 "id_label": "Patient ID:",
                 "mode_control": "CONTROL GROUP",
                 "mode_experimental": "EXPERIMENTAL GROUP",
@@ -359,7 +367,7 @@ class App(customtkinter.CTk):
                 "stop_failed_title": "停止失败",
                 "enter_ip": "请输入 IP 地址",
                 "enter_patient_id": "请输入受试者 ID",
-                "connect_demo": "启动界面演示",
+                "connect_demo": "连接",
                 "id_label": "受试者 ID：",
                 "mode_control": "对照组",
                 "mode_experimental": "实验组",
@@ -387,7 +395,7 @@ class App(customtkinter.CTk):
 
         self.say_textbox_font_size = 18
         self.say_textbox_font = customtkinter.CTkFont(size=self.say_textbox_font_size)
-        self.say_textbox_allow_typing = False
+        self.say_textbox_allow_typing = True
         self._say_textbox_current_state = "normal"
 
         self.template_button_height_left = 60
@@ -438,7 +446,7 @@ class App(customtkinter.CTk):
 
     def _build_top_controls(self):
         self.ip_entry = customtkinter.CTkEntry(self)
-        self.ip_entry.insert(0, "192.168.1.102")
+        self.ip_entry.insert(0, "nao.local")
         self.ip_entry.grid(row=0, column=0, padx=20, pady=20, sticky="w")
 
         self.connect_lang_frame = customtkinter.CTkFrame(self)
@@ -769,6 +777,23 @@ class App(customtkinter.CTk):
         self.language = new_language
         self._apply_language_texts()
         self._refresh_dialogue_layout()
+        self._sync_nao_language(new_language)
+
+    def _sync_nao_language(self, language_code: str):
+        if self.socket_manager is None:
+            return
+
+        nao_language = self._nao_language_by_code.get(language_code)
+        if not nao_language:
+            return
+
+        confirmation_text = self._language_switch_signal.get(language_code, "")
+        try:
+            self.socket_manager.handle_command("language", nao_language)
+            if confirmation_text:
+                self.socket_manager.handle_command("speak", confirmation_text)
+        except Exception as exc:
+            print(f"Failed to sync language with NAO: {exc}")
 
     def _apply_language_texts(self):
         self.title(self._t("window_title"))

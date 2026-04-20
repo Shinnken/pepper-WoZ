@@ -15,6 +15,7 @@ __pycache__/
 
 # all files with number before .tsv extension
 *[0-9].tsv
+*.zip
 
 
 bin/

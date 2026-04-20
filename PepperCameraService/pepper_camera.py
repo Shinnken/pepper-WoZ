@@ -32,7 +32,7 @@ class PepperCamera(object):
 
         self.session = qi.Session()
         self.session.connect("tcp://127.0.0.1:9559")
-        self.session.service("ALTextToSpeech").setLanguage("Polish")
+        self.session.service("ALTextToSpeech").setLanguage("English")
         if self.disable_life_mode:
             self.session.service("ALAutonomousLife").setState("disabled")
             self.session.service("ALMotion").wakeUp()
@@ -110,6 +110,27 @@ class PepperCamera(object):
             return
         await asyncio.to_thread(self.session.service("ALAnimatedSpeech").say, message)
         print("said:", message)
+
+    async def ustaw_jezyk(self, language_name: str) -> None:
+        if not self.session:
+            return
+
+        normalized = (language_name or "").strip().lower()
+        language_map = {
+            "en": "English",
+            "english": "English",
+            "zh": "Chinese",
+            "chinese": "Chinese",
+            "polish": "Polish",
+            "pl": "Polish",
+        }
+        resolved_language = language_map.get(normalized, language_name)
+        await asyncio.to_thread(self.session.service("ALTextToSpeech").setLanguage, resolved_language)
+        try:
+            await asyncio.to_thread(self.session.service("ALAnimatedSpeech").setLanguage, resolved_language)
+        except Exception:
+            pass
+        print("language set:", resolved_language)
 
     async def wez_usiadz(self) -> None:
         if self.session:

@@ -54,18 +54,24 @@ class SocketManager:
         """
         Sends the command to camera service
         """
+        action = command
         if command == "speak":
             if len(args) == 0:
                 print("No text provided for 'speak' command.")
                 return
             text = args[0]
             command = f"speak {text}"
+        elif command == "language":
+            if len(args) == 0:
+                print("No language provided for 'language' command.")
+                return
+            command = f"lang {args[0]}"
 
         print("sending command: ", command)
         command_bytes: bytes = command.encode('utf-8')
         self.tcp_socket.send(command_bytes)
         
-        match command:
+        match action:
             case "start":
                 patient_id = int(args[0]) if args else None
                 self.udp_socket.prepare_capture(patient_id)
@@ -73,10 +79,10 @@ class SocketManager:
                 self.stop()
             case "exit":
                 self.exit()
-            case "sleep" | "wake":
+            case "sleep" | "wake" | "speak" | "language":
                 pass
             case _:
-                print(f"Unknown command: {command}")
+                print(f"Unknown command: {action}")
                 return
         print("command sent")
 

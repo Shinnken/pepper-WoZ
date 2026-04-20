@@ -221,6 +221,12 @@ def make_video_from_frames(frames, patient_id, audio_bytes=None, mux_audio=True)
                     print(f"Video with audio created successfully: {output_path}")
                     # Optionally remove the video without audio
                     os.remove(video_path)
+                    # Cleanup temporary audio file after successful mux.
+                    try:
+                        os.remove(audio_path)
+                        print(f"Removed temporary audio file: {audio_path}")
+                    except OSError as cleanup_error:
+                        print(f"Could not remove temporary audio file {audio_path}: {cleanup_error}")
                 except Exception as e:
                     print(f"ffmpeg failed to mux audio: {e}. Keeping video without audio at {video_path}")
             else:
