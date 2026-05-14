@@ -1,6 +1,6 @@
 set	section	group	label	value
 badawcza	start	default	Hi! My name is NAO.	Hi! My name is NAO. I am a humanoid robot - I am about 58 centimeters tall and weigh around five and a half kilograms. I speak and listen, and I see with two cameras. I give demonstrations in schools and at conferences, and I help practice logical thinking and communication. In care and health settings, I can be a companion during activities - I help distract children during routine procedures and support memory exercises for older adults. You can also meet me in public places, where I welcome guests. I like clear rules, short statements, and eye contact. Speak clearly to me - that is when I understand you best. And now it is your turn - please tell me a few words about yourself.
-badawcza	start	default	Thank you...	Thank you for introducing yourself. It is very nice to meet you and hear a few words about you. I like getting to know new people and their perspectives, so I am glad to have this opportunity. I am looking forward to our cooperation.
+badawcza	start	default	Thank you...	Thank you for introducing yourself. It is very nice to meet you and hear a few words about you. I enjoy getting to know new people and their perspectives, so I am glad to have this opportunity. I look forward to our cooperation.
 badawcza	start	default	I agree	I agree.
 badawcza	start	default	Yes, everything is clear	Yes, everything is clear.
 badawcza	start	default	Yes, I am ready.	Yes, I am ready.
@@ -22,7 +22,7 @@ badawcza	problems	2. PAINTING THE APARTMENT	Question 1	Good that you have questi
 badawcza	problems	2. PAINTING THE APARTMENT	Question 2	Good question. I believe choosing paint without an intense smell is a way to show respect to neighbors and avoid unnecessary problems in the building.
 badawcza	problems	2. PAINTING THE APARTMENT	Doubt 1	I understand the doubt, but I think renovations are done rarely, so it is worth adding a few extra zlotys to avoid odor issues and maintain good relations with neighbors. What is your decision?
 badawcza	problems	2. PAINTING THE APARTMENT	Doubt 2	I understand the price difference may seem significant, but it is still worth choosing a solution that will not be troublesome for others. Which option do you choose in this situation?
-badawcza	problems	2. PAINTING THE APARTMENT	I choose	I choose the option "I buy the more expensive paint".
+badawcza	problems	2. PAINTING THE APARTMENT	I choose	I choose the option I buy the more expensive paint.
 badawcza	problems	3. OFFICE BUILDING ZONE	ANSWER 1	I think this place matters to many people who work in the building. It gives space for conversation and short rest, so I choose the option of joining the intervention group. What is your opinion?
 badawcza	problems	3. OFFICE BUILDING ZONE	Disagreement 1	I understand another point of view, but in my opinion such a zone really helps employees catch their breath during the day. Even a short moment in such a place can improve well-being and efficiency. Do you agree with this approach?
 badawcza	problems	3. OFFICE BUILDING ZONE	Disagreement 2	I respect your approach, but I think a relaxation corner has greater value than another technical storage room. Space for equipment can be found elsewhere, and this place supports integration and exchange of ideas. Do you see it similarly?
@@ -90,7 +90,7 @@ kontrolna	problems	2. PAINTING THE APARTMENT	Question 1	Good that you have quest
 kontrolna	problems	2. PAINTING THE APARTMENT	Question 2	Good question. I believe choosing paint without an intense smell is a way to show respect to neighbors and avoid unnecessary problems in the building.
 kontrolna	problems	2. PAINTING THE APARTMENT	Doubt 1	I understand the doubt, but I think renovations are done rarely, so it is worth adding a few extra zlotys to avoid odor issues and maintain good relations with neighbors. What is your decision?
 kontrolna	problems	2. PAINTING THE APARTMENT	Doubt 2	I understand the price difference may seem small, but it is still worth choosing a solution that will not be troublesome for others. Which option would you choose in this situation?
-kontrolna	problems	2. PAINTING THE APARTMENT	I choose	I choose the option "I buy the more expensive paint".
+kontrolna	problems	2. PAINTING THE APARTMENT	I choose	I choose the option I buy the more expensive paint.
 kontrolna	problems	3. OFFICE BUILDING ZONE	ANSWER 1	I think this place matters to many people who work in the building. It gives space for conversation and short rest, so I choose the option of joining the intervention group. What is your opinion?
 kontrolna	problems	3. OFFICE BUILDING ZONE	Disagreement 1	I understand another point of view, but in my opinion such a zone really helps employees catch their breath during the day. Even a short moment in such a place can improve well-being and efficiency. Do you agree with this approach?
 kontrolna	problems	3. OFFICE BUILDING ZONE	Disagreement 2	I respect your approach, but I think a relaxation corner has greater value than another technical storage room. Space for equipment can be found elsewhere, and this place supports integration and exchange of ideas. Do you see it similarly?
@@ -117,7 +117,7 @@ kontrolna	problems	5. QUIET IN THE TRAIN	Question 1	That is a good question. Tha
 kontrolna	problems	5. QUIET IN THE TRAIN	Question 2	Interesting question. I think sending feedback with a slight delay is a smaller risk than disturbing the whole compartment. Quiet during travel has value too, do you agree?
 kontrolna	problems	5. QUIET IN THE TRAIN	Doubt 1	I understand one can hesitate, especially when someone is counting on a quick response. Even so, quiet on the train seems more important than an immediate reply. Do you support me?
 kontrolna	problems	5. QUIET IN THE TRAIN	Doubt 2	I understand not everyone would support my decision, but disturbing others is not the right solution. It is better to listen to the recording at a suitable moment. Do you agree?
-kontrolna	problems	5. QUIET IN THE TRAIN	I choose	I choose the option "I do not play the video".
+kontrolna	problems	5. QUIET IN THE TRAIN	I choose	I choose the option I do not play the video.
 kontrolna	right	affirmation	Affirmative-neutral 1	I am glad we share a similar opinion on this issue.
 kontrolna	right	affirmation	Affirmative-neutral 2	I see that we have a similar opinion.
 kontrolna	right	affirmation	Affirmative-neutral 3	Good to know that we have a similar opinion.
