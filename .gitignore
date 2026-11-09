@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+nagrania_demo/
+dialogi/.ostatnia_tabela
+ffmpeg/
+*.zip

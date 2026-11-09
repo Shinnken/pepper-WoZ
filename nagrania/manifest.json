@@ -1,0 +1,19 @@
+{
+ "items": {
+  "e97147b3b11465fb": {
+   "file": "Polish/Zaczynamy_e97147b3.mp3",
+   "text": "Zaczynam zadawać pytania.",
+   "language": "Polish",
+   "created": "2026-11-02 13:12:33"
+  },
+  "27987ac3c105258b": {
+   "file": "Polish/Wybierz_karte_27987ac3.mp3",
+   "text": "Teraz wybierz jedną kartę i obejrzyj rysunek. Nie pokazuj mi go.",
+   "language": "Polish",
+   "created": "2026-11-02 13:12:48"
+  }
+ },
+ "last_language": "Polish",
+ "pitch_override": null,
+ "robot_pitch": 1.149999976158142
+}

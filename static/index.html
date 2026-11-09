@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NAO · panel mowy</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="bar">
+  <div class="conn">
+    <span id="dot" class="dot" title="status"></span>
+    <input id="host" type="text" value="nao.local" spellcheck="false" aria-label="adres robota">
+    <label class="check" title="Nie łącz przez SSH - uruchomisz skrypt na robocie sam">
+      <input id="manual" type="checkbox"> ręcznie
+    </label>
+    <button id="connectBtn" class="btn">Połącz</button>
+  </div>
+
+  <div class="field">
+    <span class="field-label">Wyjście</span>
+    <div id="outputs" class="seg">
+      <button data-out="robot" title="NAO mówi sam (warunek „robot humanoidalny”)">🤖 Robot</button>
+      <button data-out="speaker" title="Głos NAO z głośnika komputera (warunek „asystent głosowy”)">🔊 Głośnik</button>
+    </div>
+  </div>
+
+  <div class="field" id="pitchField" title="Wysokość głosu na głośniku (mnożnik). NAO przy mówieniu podnosi głos o swój pitchShift (zwykle 1.15).">
+    <span class="field-label">Wysokość <b id="pitchVal">—</b></span>
+    <input id="pitch" type="range" min="0.7" max="1.6" step="0.01">
+    <button id="pitchReset" class="btn mini" title="Wróć do ustawienia robota (pitchShift)">↺</button>
+  </div>
+
+  <div class="field" id="setField" hidden>
+    <span class="field-label">Zestaw</span>
+    <div id="sets" class="seg"></div>
+  </div>
+
+  <div class="field">
+    <span class="field-label">Język</span>
+    <select id="lang" disabled><option>—</option></select>
+  </div>
+
+  <div class="field">
+    <span class="field-label">Głośność <b id="volVal">—</b></span>
+    <input id="vol" type="range" min="0" max="100" step="5" disabled>
+  </div>
+
+  <label class="check field" id="animatedField" title="ALAnimatedSpeech (mowa z gestami) zamiast samego ALTextToSpeech">
+    <input id="animated" type="checkbox" checked> gesty
+  </label>
+
+  <button id="stopBtn" class="btn stop" title="Przerwij mowę i wyczyść kolejkę (Esc)">■ STOP</button>
+</header>
+
+<div id="statusLine" class="status-line"></div>
+
+<section class="now" id="now">
+  <span class="now-tag">mówi</span>
+  <span id="nowText" class="now-text">—</span>
+  <span id="queueInfo" class="queue"></span>
+</section>
+
+<main class="layout">
+  <section class="board">
+    <div class="tablebar">
+      <span class="table-name" id="tableName">brak tabeli</span>
+      <select id="fileSelect" title="Pliki w folderze dialogi/"></select>
+      <button class="btn ghost" id="reloadBtn" title="Wczytaj ponownie wybrany plik (np. po edycji w Excelu)">↻</button>
+      <label class="btn ghost" title="TSV, CSV, XLSX, ODS, XLS, Markdown, HTML, JSON">
+        Wczytaj plik…<input id="fileInput" type="file" hidden
+          accept=".tsv,.tab,.csv,.txt,.psv,.dsv,.xlsx,.xlsm,.ods,.xls,.md,.markdown,.html,.htm,.json">
+      </label>
+      <button class="btn ghost" id="pasteBtn">Wklej tabelę…</button>
+      <span class="spacer"></span>
+      <span id="recInfo" class="rec-info"></span>
+      <button class="btn ghost" id="recordBtn" title="Nagraj głosem NAO wszystkie kwestie z tabeli do MP3 (folder nagrania/). Shift+klik = nagraj od nowa wszystkie.">⏺ Nagraj MP3</button>
+      <button class="btn ghost" id="resetUsedBtn" title="Usuń żółte oznaczenia użytych kwestii">Wyczyść oznaczenia</button>
+    </div>
+    <div id="warnings" class="warnings" hidden></div>
+    <nav id="tabs" class="tabs"></nav>
+    <nav id="groups" class="groups"></nav>
+    <div id="grid" class="grid"></div>
+  </section>
+
+  <aside class="side">
+    <div id="pinned" class="pinned"></div>
+
+    <div class="free">
+      <textarea id="freeText" rows="3" placeholder="Własna kwestia…"></textarea>
+      <button id="freeSay" class="btn primary">Powiedz</button>
+    </div>
+
+    <details class="history" open>
+      <summary>Historia</summary>
+      <ol id="history"></ol>
+    </details>
+  </aside>
+</main>
+
+<dialog id="pasteDialog">
+  <form method="dialog" class="paste">
+    <h2>Wklej tabelę</h2>
+    <p>Zaznacz komórki w Excelu / LibreOffice / Google Sheets i wklej tutaj (Ctrl+V).
+       Działa też CSV, TSV, Markdown i JSON.</p>
+    <textarea id="pasteText" rows="14" spellcheck="false"></textarea>
+    <div class="paste-actions">
+      <button value="cancel" class="btn ghost">Anuluj</button>
+      <button value="ok" id="pasteOk" class="btn primary">Wczytaj</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="drop" class="drop" hidden><div>Upuść plik z tabelą</div></div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

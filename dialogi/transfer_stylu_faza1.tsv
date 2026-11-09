@@ -1,0 +1,37 @@
+zestaw	sekcja	grupa	etykieta	kwestia	kolejność
+uprzejmy	Faza 1	Instrukcja	Powitanie	Cześć! Miło mi Cię poznać. Zagramy razem w „Zgadnij obrazek”. Widzisz karty przed sobą?	1
+rozkazujący	Faza 1	Instrukcja	Powitanie	Cześć. Zagramy razem w „Zgadnij obrazek”. Widzisz karty przed sobą?	1
+uprzejmy	Faza 1	Instrukcja	Zasady	Zasady są proste! Za chwilę wybierzesz jedną kartę. Ja spróbuję odgadnąć, co jest na obrazku. Będę zadawać pytania. Czy to jasne?	2
+rozkazujący	Faza 1	Instrukcja	Zasady	Zasady są proste. Za chwilę wybierzesz jedną kartę. Ja będę zgadywać, co jest na obrazku. Będę zadawać pytania. Czy to jasne?	2
+uprzejmy	Faza 1	Instrukcja	Wybierz kartę	Świetnie! Wybierz, proszę, jedną kartę. Obejrzyj obrazek, ale nie pokazuj mi go, dobrze?	3
+rozkazujący	Faza 1	Instrukcja	Wybierz kartę	Wybierz jedną kartę. Obejrzyj obrazek. Nie pokazuj mi go. Karta została wybrana?	3
+uprzejmy	Faza 1	Instrukcja	Osiem pytań – zasady	Zadam Ci osiem pytań. Czy możesz odpowiadać na nie tylko „tak” albo „nie”?	4
+rozkazujący	Faza 1	Instrukcja	Osiem pytań – zasady	Teraz zadam Ci osiem pytań. Odpowiadaj tylko „tak” albo „nie”. Czy to jasne?	4
+uprzejmy	Faza 1	Instrukcja	Zaczynamy	Dziękuję! W takim razie zaczynajmy.	5
+rozkazujący	Faza 1	Instrukcja	Zaczynamy	Zaczynam zadawać pytania.	5
+uprzejmy	Faza 1	Pytania	1. Owoc?	Powiesz mi, proszę, czy na obrazku jest owoc?	1
+rozkazujący	Faza 1	Pytania	1. Owoc?	Powiedz, czy na obrazku jest owoc.	1
+uprzejmy	Faza 1	Pytania	2. Skórka?	Proszę, spójrz na obrazek i sprawdź, czy to ma skórkę.	2
+rozkazujący	Faza 1	Pytania	2. Skórka?	Spójrz na obrazek. Sprawdź, czy to ma skórkę?	2
+uprzejmy	Faza 1	Pytania	3. Rośnie na drzewie?	Podpowiedz mi, proszę: czy to rośnie na drzewie?	3
+rozkazujący	Faza 1	Pytania	3. Rośnie na drzewie?	Odpowiedz: czy to rośnie na drzewie?	3
+uprzejmy	Faza 1	Pytania	4. Żółty kolor?	Czy możesz określić, czy to ma żółty kolor?	4
+rozkazujący	Faza 1	Pytania	4. Żółty kolor?	Określ, czy to ma żółty kolor?	4
+uprzejmy	Faza 1	Pytania	5. Zmieści się w dłoni?	Spróbuj, proszę, ocenić, czy to zmieściłoby się w jednej dłoni.	5
+rozkazujący	Faza 1	Pytania	5. Zmieści się w dłoni?	Oceń, czy to zmieściłoby się w jednej dłoni?	5
+uprzejmy	Faza 1	Pytania	6. Wycisnąć sok?	Pomóż mi, proszę, ustalić, czy można z tego wycisnąć sok.	6
+rozkazujący	Faza 1	Pytania	6. Wycisnąć sok?	Ustal, czy można z tego wycisnąć sok.	6
+uprzejmy	Faza 1	Pytania	7. Większe od piłki?	Chętnie poznam Twoją odpowiedź: czy to jest większe od piłki nożnej?	7
+rozkazujący	Faza 1	Pytania	7. Większe od piłki?	Podaj odpowiedź: czy to jest większe od piłki nożnej?	7
+uprzejmy	Faza 1	Pytania	8. Pomarańcza?	Czy to może być pomarańcza?	8
+rozkazujący	Faza 1	Pytania	8. Pomarańcza?	Czy to pomarańcza? Potwierdź.	8
+uprzejmy	Faza 1	Zakończenie	Koniec gry	Prawie się udało! Dziękuję za wspólną zabawę. To koniec zadania.	1
+rozkazujący	Faza 1	Zakończenie	Koniec gry	Obrazek nie został odgadnięty. Koniec zadania.	1
+uprzejmy	szybkie	Po odpowiedzi dziecka	Po odpowiedzi	Dziękuję za odpowiedź.	1
+rozkazujący	szybkie	Po odpowiedzi dziecka	Po odpowiedzi	Przechodzimy dalej.	1
+uprzejmy	szybkie	Sytuacje niestandardowe	S1 · brak odpowiedzi	Czy możesz odpowiedzieć na moje pytanie?	1
+rozkazujący	szybkie	Sytuacje niestandardowe	S1 · brak odpowiedzi	Odpowiedz na pytanie.	1
+uprzejmy	szybkie	Sytuacje niestandardowe	S2 · nie „tak”/„nie”	Dziękuję. Czy możesz odpowiedzieć tylko „tak” albo „nie”?	2
+rozkazujący	szybkie	Sytuacje niestandardowe	S2 · nie „tak”/„nie”	Odpowiedz tylko „tak” albo „nie”.	2
+uprzejmy	szybkie	Sytuacje niestandardowe	S3 · pytanie poza grą	Chętnie wrócę do naszej gry. Czy możemy kontynuować zgadywanie obrazka?	3
+rozkazujący	szybkie	Sytuacje niestandardowe	S3 · pytanie poza grą	Wracamy do gry. Odpowiadaj na kolejne pytania.	3
