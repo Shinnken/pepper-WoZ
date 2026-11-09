@@ -13,6 +13,7 @@ Uruchom:  python3 server.py            (potem otwórz http://localhost:8080)
 
 import argparse
 import base64
+import glob
 import hashlib
 import itertools
 import json
@@ -42,6 +43,16 @@ RECORDINGS_DIR = os.path.join(BASE_DIR, "nagrania")
 LAST_TABLE_FILE = os.path.join(TABLES_DIR, ".ostatnia_tabela")
 ROBOT_SCRIPT = os.path.join(BASE_DIR, "robot", "nao_speech_service.py")
 REMOTE_SCRIPT_NAME = "nao_speech_service.py"
+IS_WINDOWS = os.name == "nt"
+# Na Windows procesy ffmpeg/ffplay uruchamiamy bez osobnego okna konsoli.
+NO_WINDOW = {"creationflags": subprocess.CREATE_NO_WINDOW} if IS_WINDOWS else {}
+
+# Przenośny ffmpeg rozpakowany do folderu ffmpeg\ obok server.py (ffmpeg\bin\ albo
+# ffmpeg\ffmpeg-7.1-essentials_build\bin\) - działa bez zmiany PATH.
+_FFMPEG_DIR = os.path.join(BASE_DIR, "ffmpeg")
+for _dir in [os.path.join(_FFMPEG_DIR, "bin"), _FFMPEG_DIR] + sorted(glob.glob(os.path.join(_FFMPEG_DIR, "*", "bin"))):
+    if os.path.isdir(_dir):
+        os.environ["PATH"] = _dir + os.pathsep + os.environ.get("PATH", "")
 
 # Ustawienia środowiska Pythona na robocie - skopiowane z działającego pepper-WoZ-UI-demo.
 REMOTE_PYTHON = "/home/nao/apps/python3nao/bin/python3"
@@ -220,7 +231,8 @@ class Recordings:
         filters = ["-af", pitch_filter(wav_rate(src), pitch)] if abs(pitch - 1.0) > 0.005 else []
         proc = subprocess.run([self.ffmpeg, "-y", "-loglevel", "error", "-i", src] + filters +
                               ["-codec:a", "libmp3lame", "-q:a", "2", out + ".tmp.mp3"],
-                              capture_output=True, text=True)
+                              capture_output=True, text=True, encoding="utf-8", errors="replace",
+                              **NO_WINDOW)
         if proc.returncode != 0:
             raise RuntimeError("ffmpeg: " + proc.stderr.strip()[-300:])
         os.replace(out + ".tmp.mp3", out)
@@ -631,7 +643,8 @@ class Speaker:
                         raise InterruptedError
                     self.hub.set_status(entry["id"], "speaking")
                     self.proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL,
-                                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                                 **NO_WINDOW)
                 self.proc.wait()
                 self.hub.set_status(entry["id"], "cancelled" if self.cancel_current else "done")
             except InterruptedError:
@@ -933,6 +946,12 @@ def main():
     p.add_argument("--no-browser", action="store_true")
     args = p.parse_args()
     RAW_PCM["rate"] = args.raw_rate
+    # konsola Windows nie zawsze jest w UTF-8 - polskie znaki w komunikatach nie mogą wywalić serwera
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
 
     hub = Hub()
     robot = RobotLink(args, hub)
@@ -945,6 +964,8 @@ def main():
     Handler.demo = args.demo
     if not speaker.player_cmd:
         print("UWAGA: brak odtwarzacza audio (ffplay/mpv/pw-play) - wyjście „głośnik” nie zadziała.")
+        if IS_WINDOWS:
+            print("       Rozpakuj ffmpeg (wersja z ffplay.exe) do folderu ffmpeg\\ obok server.py.")
     if not speaker.rec.ffmpeg:
         print("UWAGA: brak ffmpeg - nagrania będą zapisywane jako WAV zamiast MP3.")
 

@@ -24,6 +24,7 @@ import os
 import struct
 import socket
 import sys
+import tempfile
 import threading
 import time
 import wave
@@ -206,7 +207,8 @@ class Service(object):
             if job is None:
                 break
             job_id, text = job
-            path = "/tmp/naowoz_tts_%s_%s.wav" % (os.getpid(), job_id)
+            tmp_dir = tempfile.gettempdir() if isinstance(self.robot, FakeRobot) else "/tmp"
+            path = os.path.join(tmp_dir, "naowoz_tts_%s_%s.wav" % (os.getpid(), job_id))
             try:
                 self.robot.say_to_file(text, path)
                 with open(path, "rb") as fh:

@@ -10,6 +10,20 @@ Nie ma tu pola do zatwierdzania ani Entera.
 ./start.sh --demo             # symulowany robot, do testów bez NAO
 ```
 
+### Windows
+
+1. Zainstaluj **Pythona 3** z [python.org](https://www.python.org/downloads/). W instalatorze zaznacz „Add python.exe to PATH”.
+2. Rozpakuj projekt i kliknij dwukrotnie **`start.bat`**. Za pierwszym razem utworzy `.venv` i zainstaluje paramiko (potrzebny internet).
+   Tryb demo: `start.bat --demo` w wierszu poleceń.
+3. **Zapora:** robot łączy się do komputera na port TCP **54331**. Uruchom raz **`otworz_port.bat`** (sam poprosi o uprawnienia
+   administratora). Możesz też kliknąć „Zezwól” w oknie zapory przy pierwszym uruchomieniu, zaznaczając także sieci publiczne,
+   jeśli sieć z robotem jest tak oznaczona.
+4. **Wyjście „Głośnik” (warunki 3–4)** wymaga ffmpeg z `ffplay.exe`. Pobierz np. `ffmpeg-release-essentials.zip`
+   z [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) i rozpakuj do folderu **`ffmpeg\`** obok `server.py`. Panel sam znajdzie
+   `ffmpeg\bin\` albo `ffmpeg\<wersja>\bin\`, nie trzeba zmieniać PATH. Bez ffmpeg warunki 1–2 (robot mówi sam) działają normalnie.
+
+Laptop i robot muszą być w tej samej sieci. Panel w przeglądarce działa pod `http://localhost:8080`.
+
 **Połącz** wysyła przez SSH (nao/nao) plik `robot/nao_speech_service.py` do katalogu domowego robota i go uruchamia.
 Robot łączy się wtedy zwrotnie z PC na port TCP **54331** (zapora musi go przepuszczać).
 Środowisko Pythona na robocie jest ustawione tak samo jak w pepper-WoZ-UI-demo.
