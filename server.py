@@ -41,6 +41,7 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 TABLES_DIR = os.path.join(BASE_DIR, "dialogi")
 RECORDINGS_DIR = os.path.join(BASE_DIR, "nagrania")
 LAST_TABLE_FILE = os.path.join(TABLES_DIR, ".ostatnia_tabela")
+DEFAULT_TABLE = "transfer_stylu_faza1.tsv"   # tabela startowa, gdy nie ma zapamiętanego wyboru
 ROBOT_SCRIPT = os.path.join(BASE_DIR, "robot", "nao_speech_service.py")
 REMOTE_SCRIPT_NAME = "nao_speech_service.py"
 
@@ -766,6 +767,9 @@ class DialogueStore:
                 candidates.append(os.path.join(TABLES_DIR, fh.read().strip()))
         except OSError:
             pass
+        # bez zapamiętanego wyboru (świeży klon, .ostatnia_tabela jest w .gitignore) startujemy
+        # z tabelą z procedury, a nie z pierwszą alfabetycznie
+        candidates.append(os.path.join(TABLES_DIR, DEFAULT_TABLE))
         candidates += [os.path.join(TABLES_DIR, f) for f in self.list_files()]
         for path in candidates:
             try:
