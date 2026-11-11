@@ -20,6 +20,7 @@ import os
 import re
 import shutil
 import socket
+import struct
 import subprocess
 import sys
 import tempfile
@@ -114,7 +115,44 @@ def pitch_filter(rate, pitch):
     return "asetrate=%d,aresample=%d,atempo=%.6f" % (round(rate * pitch), rate, 1.0 / pitch)
 
 
+def parse_wav(data):
+    """Odporny parser WAV -> ((format, kanały, częstotliwość, bity), dane) albo None.
+
+    Ignoruje rozmiar RIFF z nagłówka: sayToFile w niektórych NAOqi zapisuje tam 0 albo
+    0xFFFFFFFF (zapis strumieniowy), a moduł wave wtedy nie widzi żadnych bloków
+    ("fmt chunk and/or data chunk missing"). Rozmiar bloku data 0/0xFFFFFFFF/za duży
+    oznacza "do końca pliku".
+    """
+    if data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+        return None
+    pos, fmt = 12, None
+    while pos + 8 <= len(data):
+        cid = data[pos:pos + 4]
+        size = struct.unpack("<I", data[pos + 4:pos + 8])[0]
+        body = pos + 8
+        if cid == b"fmt ":
+            if size < 16 or len(data) < body + 16:
+                return None
+            tag, channels, rate, _, _, bits = struct.unpack("<HHIIHH", data[body:body + 16])
+            if tag == 0xFFFE and size >= 26 and len(data) >= body + 26:  # WAVE_FORMAT_EXTENSIBLE
+                tag = struct.unpack("<H", data[body + 24:body + 26])[0]
+            fmt = (tag, channels, rate, bits)
+        elif cid == b"data":
+            if fmt is None:
+                return None
+            end = body + size
+            if size in (0, 0xFFFFFFFF) or end > len(data):
+                end = len(data)
+            return fmt, data[body:end]
+        pos = body + size + (size & 1)
+    return None
+
+
 def wav_rate(path):
+    with open(path, "rb") as fh:
+        parsed = parse_wav(fh.read())
+    if parsed:
+        return parsed[0][2]
     with wave.open(path, "rb") as w:
         return w.getframerate()
 
@@ -243,8 +281,21 @@ class Recordings:
         out, src = os.path.join(self.folder, rel), os.path.join(self.folder, rel_src)
         os.makedirs(os.path.dirname(src), exist_ok=True)
 
-        if data[:4] == b"RIFF":
-            with open(src, "wb") as fh:
+        parsed = parse_wav(data) if data[:4] == b"RIFF" else None
+        if parsed and parsed[0][0] == 1 and parsed[0][3] in (8, 16, 24, 32) and parsed[1]:
+            # PCM: zapisz poprawny nagłówek (naprawia rozmiary 0/0xFFFFFFFF z NAOqi)
+            (_, channels, rate, bits), pcm = parsed
+            frame = channels * bits // 8
+            with wave.open(src, "wb") as w:
+                w.setnchannels(channels)
+                w.setsampwidth(bits // 8)
+                w.setframerate(rate)
+                w.writeframes(pcm[:len(pcm) - len(pcm) % frame])
+        elif data[:4] == b"RIFF":
+            if not parsed:
+                raise RuntimeError("Robot zwrócił nierozpoznany plik WAV (początek: %s)"
+                                   % data[:48].hex())
+            with open(src, "wb") as fh:  # inny format niż PCM - zostaw jak jest (ffmpeg sobie poradzi)
                 fh.write(data)
         else:  # surowe PCM 16-bit -> opakuj w WAV
             with wave.open(src, "wb") as w:
