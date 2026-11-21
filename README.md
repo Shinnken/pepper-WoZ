@@ -21,37 +21,52 @@ Przydatne opcje: `--bind 0.0.0.0` (panel dostępny z innych komputerów w sieci)
 
 ## Obsługa
 
-- klik w kwestię: robot mówi od razu, a przycisk zostaje oznaczony na żółto jako użyty. Kolejne kliknięcia trafiają do kolejki.
-- **STOP** albo **Esc**: przerywa mowę i czyści kolejkę.
-- przełączniki w panelu: wyjście (robot/głośnik), zestaw (np. uprzejmy/rozkazujący), język TTS, głośność, „gesty” (ALAnimatedSpeech albo zwykły TTS).
-- pole „Własna kwestia” wysyła wpisany tekst tylko przyciskiem. Kliknięcie wpisu w historii wstawia go do tego pola.
+- klik w kwestię: wybrane wyjście (🤖 **Robot** albo 🔊 **Głośnik**) od razu odtwarza przypisany plik audio z folderu `nagrania/`, a przycisk zostaje oznaczony na żółto jako użyty. Kolejne kliknięcia trafiają do kolejki.
+- **STOP** albo **Esc**: przerywa odtwarzanie i czyści kolejkę.
+- przełączniki w panelu: wyjście (robot/głośnik), zestaw (np. uprzejmy/rozkazujący), głośność robota, „gesty” (gestykulacja NAO w trakcie odtwarzania pliku audio przez `ALAnimationPlayer`).
+- syntezator TTS robota jest całkowicie wyłączony — zarówno z głośnika komputera, jak i z głośnika NAO odtwarzane są wyłącznie dostarczone nagrania audio.
 
-## Robot albo głośnik (narrator)
+## Gdzie wrzucać nagrania (`nagrania/`)
 
-Przełącznik **Wyjście** w nagłówku decyduje, kto mówi:
+Dostarczone pliki (obsługiwane formaty: **`.wav`, `.mp3`, `.mp4`, `.m4a`, `.ogg`, `.flac`, `.aac`, `.webm`, `.wma`**, w tym podwójne rozszerzenia typu **`.m4a.mp4`**) wrzuć do folderu **`nagrania/`** (bezpośrednio albo do podfolderów `nagrania/uprzejmy/` i `nagrania/rozkazujący/`).
 
-- **🤖 Robot**: NAO mówi sam, jak dotąd. To warunki 1–2 („robot humanoidalny”).
-- **🔊 Głośnik**: ten sam głos NAO, ale z głośnika komputera. To warunki 3–4 („asystent głosowy”).
-  Robot syntetyzuje kwestię do pliku (`ALTextToSpeech.sayToFile`), PC konwertuje ją do MP3 (ffmpeg),
-  zapisuje w `nagrania/<Język>/` i odtwarza (ffplay/mpv).
+### Numeracja plików (od 1 do 18):
+Każdy przycisk w panelu ma swój numer **`#1` .. `#18`** (widoczny w prawym górnym rogu przycisku).
+Rozpoznawane są wszystkie poniższe konwencje nazewnictwa (wielkość liter i polskie znaki bez znaczenia):
+- **Z nazwą zestawu i numerem** (mogą leżeć bezpośrednio w `nagrania/` albo w `nagrania/uprzejmy/` i `nagrania/rozkazujący/`):
+  - `Uprzejmy1.m4a.mp4` .. `Uprzejmy18.m4a.mp4` (lub `.mp4`, `.m4a`, `.wav`, `.mp3`)
+  - `Rozkazujacy1.m4a.mp4` .. `Rozkazujacy18.m4a.mp4` (lub `Rozkazujący1...`, `rozkazujacy_1...`)
+- **Same numery w podfolderach zestawów**:
+  - `nagrania/uprzejmy/1.mp4` .. `18.mp4` (lub `01.mp4` .. `18.mp4`)
+  - `nagrania/rozkazujący/1.mp4` .. `18.mp4`
+- **Po etykiecie przycisku** (np. `Powitanie.wav`) albo przez przeciągnięcie pliku myszką bezpośrednio na przycisk w przeglądarce.
 
-**⏺ Nagraj MP3** nagrywa głosem NAO wszystkie kwestie z tabeli (pomija te, które już są; Shift+klik nagrywa wszystko od nowa).
-Licznik „MP3 (Polish): 17/17” pokazuje, ile kwestii z bieżącego zestawu ma nagranie, a ♪ na przycisku oznacza, że to nagranie istnieje.
-Po nagraniu wyjście „Głośnik” działa także **bez podłączonego robota**.
-Kwestia bez nagrania nagra się sama przy pierwszym kliknięciu, ale tylko gdy robot jest połączony (trwa to chwilę).
-Nagrania są przypisane do języka TTS. Zmiana języka lub głosu oznacza nowe nagrania.
-Tryb `--demo` zapisuje swoje nagrania w osobnym folderze `nagrania_demo/`.
+| Nr (`#`) | Przycisk w panelu | Zestaw `uprzejmy` (przykład) | Zestaw `rozkazujący` (przykład) |
+|---|---|---|---|
+| **#1** | Powitanie | `Uprzejmy1.m4a.mp4` (lub `1.mp4`) | `Rozkazujacy1.m4a.mp4` (lub `1.mp4`) |
+| **#2** | Zasady | `Uprzejmy2.m4a.mp4` | `Rozkazujacy2.m4a.mp4` |
+| **#3** | Wybierz kartę | `Uprzejmy3.m4a.mp4` | `Rozkazujacy3.m4a.mp4` |
+| **#4** | Osiem pytań – zasady | `Uprzejmy4.m4a.mp4` | `Rozkazujacy4.m4a.mp4` |
+| **#5** | Zaczynamy | `Uprzejmy5.m4a.mp4` | `Rozkazujacy5.m4a.mp4` |
+| **#6** | 1. Owoc? | `Uprzejmy6.m4a.mp4` | `Rozkazujacy6.m4a.mp4` |
+| **#7** | 2. Skórka? | `Uprzejmy7.m4a.mp4` | `Rozkazujacy7.m4a.mp4` |
+| **#8** | 3. Rośnie na drzewie? | `Uprzejmy8.m4a.mp4` | `Rozkazujacy8.m4a.mp4` |
+| **#9** | 4. Żółty kolor? | `Uprzejmy9.m4a.mp4` | `Rozkazujacy9.m4a.mp4` |
+| **#10** | 5. Zmieści się w dłoni? | `Uprzejmy10.m4a.mp4` | `Rozkazujacy10.m4a.mp4` |
+| **#11** | 6. Wycisnąć sok? | `Uprzejmy11.m4a.mp4` | `Rozkazujacy11.m4a.mp4` |
+| **#12** | 7. Większe od piłki? | `Uprzejmy12.m4a.mp4` | `Rozkazujacy12.m4a.mp4` |
+| **#13** | 8. Pomarańcza? | `Uprzejmy13.m4a.mp4` | `Rozkazujacy13.m4a.mp4` |
+| **#14** | Koniec gry | `Uprzejmy14.m4a.mp4` | `Rozkazujacy14.m4a.mp4` |
+| **#15** | Po odpowiedzi | `Uprzejmy15.m4a.mp4` | `Rozkazujacy15.m4a.mp4` |
+| **#16** | S1 · brak odpowiedzi | `Uprzejmy16.m4a.mp4` | `Rozkazujacy16.m4a.mp4` |
+| **#17** | S2 · nie „tak”/„nie” | `Uprzejmy17.m4a.mp4` | `Rozkazujacy17.m4a.mp4` |
+| **#18** | S3 · pytanie poza grą | `Uprzejmy18.m4a.mp4` | `Rozkazujacy18.m4a.mp4` |
 
-**Wysokość głosu (suwak „Wysokość”):** `sayToFile` zapisuje głos bez podwyższenia, które NAO nakłada przy mówieniu
-(`pitchShift`, na tym robocie 1.15). Domyślnie panel używa wartości zgłoszonej przez robota („jak robot”).
-Suwakiem ustawiasz ją ręcznie, a ↺ wraca do ustawienia robota. Zmiana działa od razu przy odtwarzaniu, bo czyste nagrania leżą
-w `nagrania/<Język>/zrodla/`, a pliki MP3 przeliczają się w tle (bez robota).
-
-Kolumna `output` (aliasy: wyjście, mówca, speaker) w tabeli może na stałe przypisać kwestię:
-`robot` / `agent` albo `narrator` / `głośnik` / `asystent`. Pusta kolumna oznacza, że decyduje przełącznik w panelu.
-
-> Jeśli `sayToFile` na danym NAOqi zwraca surowe PCM bez nagłówka WAV, panel zakłada 22050 Hz mono.
-> Gdy nagranie brzmi za szybko lub za wolno, uruchom serwer z `--raw-rate 16000` (albo inną wartością).
+> **Wskaźniki w panelu:**
+> - Licznik `Nagrania (nagrania/uprzejmy/): 18/18` na pasku tabeli pokazuje, ile kwestii z wybranego zestawu ma dopasowany plik audio.
+> - Zielona nutka **♪** na przycisku oznacza, że plik nagrania został znaleziony (najechanie myszką pokazuje ścieżkę pliku).
+> - Czerwony znak **⚠** i przerywana ramka oznaczają brak pliku audio dla tej kwestii.
+> - Dla wyjścia **🤖 Robot** pliki inne niż `.wav` (np. `.mp3`) są przed wysłaniem automatycznie konwertowane przez `ffmpeg` do formatu WAV (16-bit PCM, 22050 Hz) i zapamiętywane w `nagrania/.robot_wav/`.
 
 ## Tabele z kwestiami
 

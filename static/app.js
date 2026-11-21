@@ -12,7 +12,9 @@ const state = {
   files: [],
   set: store.get("set", null),
   output: store.get("output", "robot"),
-  recorded: new Set(),      // "idPrzycisku|zestaw" z nagraniem MP3
+  recorded: new Set(),      // "idPrzycisku|zestaw" z plikiem audio
+  recFiles: {},             // "idPrzycisku|zestaw" -> ścieżka względna w nagrania/
+  recFolder: "nagrania",
   recVersion: null,
   section: store.get("section", null),
   groupBySection: store.get("groups", {}),
@@ -66,7 +68,8 @@ async function refreshRecorded() {
   try {
     const r = await api("/api/recordings");
     state.recorded = new Set(r.have);
-    state.recFolder = r.folder;
+    state.recFiles = r.files || {};
+    state.recFolder = r.folder || "nagrania";
     paintLines();
     renderRecInfo();
   } catch { /* serwer niedostępny - poll pokaże błąd */ }
@@ -74,6 +77,11 @@ async function refreshRecorded() {
 
 function valueKey(item) {
   return state.set in item.values ? state.set : "default" in item.values ? "default" : Object.keys(item.values)[0];
+}
+
+function fileFor(item) {
+  const f = item.files || {};
+  return f[state.set] ?? f.default ?? "";
 }
 
 function outputFor(item) { return (item && item.output) || state.output; }
@@ -84,16 +92,7 @@ function renderOutput() {
 }
 
 function renderRecInfo() {
-  const el = $("recInfo"), btn = $("recordBtn");
-  const b = state.status.bulk;
-  const rr = state.status.pitch?.rendering;
-  if (rr && rr.running) { el.innerHTML = `przeliczam MP3 <b>${rr.done}/${rr.total}</b>`; return; }
-  if (b && b.running) {
-    el.innerHTML = `nagrywam <b>${b.done}/${b.total}</b>`;
-    btn.textContent = "✕ Przerwij nagrywanie";
-    return;
-  }
-  btn.textContent = "⏺ Nagraj MP3";
+  const el = $("recInfo");
   const t = state.table;
   if (!t) { el.textContent = ""; return; }
   let total = 0, have = 0;
@@ -102,9 +101,9 @@ function renderRecInfo() {
     total++;
     if (state.recorded.has(it.id + "|" + valueKey(it))) have++;
   }
-  const lang = state.status.rec_language ? ` (${state.status.rec_language})` : "";
-  el.innerHTML = `MP3${lang}: <b>${have}/${total}</b>`;
-  if (b && !b.running && b.errors?.length) el.title = b.errors.join("\n"); else el.title = "";
+  const sub = state.set && state.set !== "default" ? `${state.recFolder}/${state.set}/` : `${state.recFolder}/`;
+  el.innerHTML = `Nagrania (<code>${esc(sub)}</code>): <b>${have}/${total}</b>`;
+  el.classList.toggle("missing", have < total);
 }
 
 function textFor(item) {
@@ -219,14 +218,46 @@ function lineButton(item) {
   b.className = "line";
   b.dataset.id = item.id;
   const text = textFor(item);
-  b.title = text;
-  b.dataset.rec = item.id + "|" + valueKey(item);
+  const vKey = valueKey(item);
+  const recKey = item.id + "|" + vKey;
+  b.dataset.rec = recKey;
+  const idxTag = item.index ? `<span class="idx">#${item.index}</span>` : "";
   const fixed = item.output === "speaker" ? `<span class="badge" title="zawsze z głośnika (narrator)">🔊</span>`
     : item.output === "robot" ? `<span class="badge" title="zawsze przez robota">🤖</span>` : "";
-  b.innerHTML = `<span class="badges">${fixed}<span class="badge mp3" title="jest nagranie MP3">♪</span></span>` +
+  b.innerHTML = `<span class="badges">${idxTag}${fixed}<span class="badge mp3" title="jest plik nagrania">♪</span><span class="badge no-mp3" title="brak pliku nagrania w folderze nagrania/">⚠</span></span>` +
     `<span class="lbl">${esc(item.label)}</span>` +
     (text.trim() !== item.label.trim() ? `<span class="txt">${esc(text)}</span>` : "");
   b.onclick = () => speakItem(item);
+
+  // Przeciągnij i upuść plik audio bezpośrednio na przycisk kwestii
+  b.addEventListener("dragover", (e) => {
+    if (e.dataTransfer.types.includes("Files")) {
+      e.preventDefault();
+      e.stopPropagation();
+      b.classList.add("drag-target");
+    }
+  });
+  b.addEventListener("dragleave", () => b.classList.remove("drag-target"));
+  b.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    b.classList.remove("drag-target");
+    $("drop").hidden = true;
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    if (!/\.(wav|mp3|ogg|flac|m4a|mp4|aac|webm|wma)$/i.test(f.name)) {
+      uploadFile(f);
+      return;
+    }
+    try {
+      const qs = new URLSearchParams({ item_id: item.id, set: vKey, label: item.label, name: f.name });
+      const res = await api("/api/recordings/upload?" + qs.toString(), f, true);
+      toast(`Przypisano nagranie „${res.file}” do „${item.label}”`);
+      await refreshRecorded();
+    } catch (err) {
+      toast(err.message, true);
+    }
+  });
   return b;
 }
 
@@ -234,9 +265,19 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-// ------------------------------------------------------------------ mowa
-async function say(text, label, output) {
-  const r = await api("/api/say", { text, label, output: output || state.output, animated: $("animated").checked });
+// ------------------------------------------------------------------ odtwarzanie nagrań
+async function sayItem(item) {
+  const vKey = valueKey(item);
+  const r = await api("/api/say", {
+    item_id: item.id,
+    index: item.index,
+    set: vKey,
+    label: item.label,
+    text: textFor(item),
+    file: fileFor(item),
+    output: outputFor(item),
+    animated: $("animated").checked,
+  });
   return r.id;
 }
 
@@ -245,7 +286,7 @@ async function speakItem(item) {
   if (now - (state.lastClick.get(item.id) || 0) < 800) return; // ochrona przed podwójnym kliknięciem
   state.lastClick.set(item.id, now);
   try {
-    const id = await say(textFor(item), item.label, outputFor(item));
+    const id = await sayItem(item);
     state.jobItem.set(id, item.id);
     state.used.add(item.id);
     saveUsed();
@@ -259,18 +300,25 @@ function paintLines() {
   const byItem = new Map();
   for (const h of state.status.history || []) {
     const itemId = state.jobItem.get(h.id);
-    if (itemId && ["speaking", "queued", "recording"].includes(h.status)) byItem.set(itemId, h.status);
+    if (itemId && ["speaking", "queued"].includes(h.status)) byItem.set(itemId, h.status);
   }
   document.querySelectorAll(".line").forEach((el) => {
     const st = byItem.get(el.dataset.id);
     el.classList.toggle("used", state.used.has(el.dataset.id));
     el.classList.toggle("speaking", st === "speaking");
     el.classList.toggle("queued", st === "queued");
-    el.classList.toggle("recording", st === "recording");
-    const hasMp3 = state.recorded.has(el.dataset.rec);
-    el.classList.toggle("has-mp3", hasMp3);
-    const badge = el.querySelector(".badge.mp3");
-    if (badge) badge.hidden = !hasMp3;
+    const recKey = el.dataset.rec;
+    const hasAudio = state.recorded.has(recKey);
+    const relFile = state.recFiles[recKey];
+    el.classList.toggle("has-mp3", hasAudio);
+    el.classList.toggle("missing-mp3", !hasAudio);
+    const badgeOk = el.querySelector(".badge.mp3");
+    const badgeNo = el.querySelector(".badge.no-mp3");
+    if (badgeOk) {
+      badgeOk.hidden = !hasAudio;
+      if (relFile) badgeOk.title = `Plik: ${state.recFolder}/${relFile}`;
+    }
+    if (badgeNo) badgeNo.hidden = hasAudio;
   });
 }
 
@@ -289,34 +337,20 @@ function renderStatus(s) {
   line.className = "status-line" + (s.error ? " err" : "");
 
   const online = st === "connected";
-  const lang = $("lang");
-  lang.disabled = !online || !s.languages.length;
-  const sig = s.languages.join("|");
-  if (lang.dataset.sig !== sig) {
-    lang.dataset.sig = sig;
-    lang.innerHTML = "";
-    if (!s.languages.length) lang.add(new Option("—", ""));
-    for (const l of s.languages) lang.add(new Option(l, l));
-  }
-  if (document.activeElement !== lang && s.language) lang.value = s.language;
-
   const vol = $("vol");
   vol.disabled = !online || s.volume == null;
   if (!vol.matches(":active") && s.volume != null) { vol.value = s.volume; $("volVal").textContent = s.volume; }
 
-  renderPitch(s.pitch, s.live_pitch);
-
   const now = $("now");
   now.classList.toggle("active", !!s.speaking);
   now.classList.toggle("spk", s.speaking?.output === "speaker");
-  const rec = s.history.find((h) => h.status === "recording");
-  $("nowText").textContent = s.speaking ? s.speaking.text : rec ? "nagrywam głos NAO: " + rec.text : "—";
+  $("nowText").textContent = s.speaking ? `${s.speaking.text}${s.speaking.file ? ` (${s.speaking.file})` : ""}` : "—";
   document.querySelector(".now-tag").textContent =
-    s.speaking ? (s.speaking.output === "speaker" ? "głośnik" : "robot") : rec ? "nagrywa" : "mówi";
+    s.speaking ? (s.speaking.output === "speaker" ? "głośnik" : "robot") : "odtwarza";
   const q = s.history.filter((h) => h.status === "queued").length;
   $("queueInfo").textContent = q ? `w kolejce: ${q}` : "";
-  if (s.rec_version !== state.recVersion || s.rec_language !== state.recLanguage) {
-    state.recVersion = s.rec_version; state.recLanguage = s.rec_language;
+  if (s.rec_version !== state.recVersion) {
+    state.recVersion = s.rec_version;
     refreshRecorded();
   }
   renderRecInfo();
@@ -334,28 +368,12 @@ function renderStatus(s) {
       const li = document.createElement("li");
       li.className = h.status;
       const icon = h.output === "speaker" ? "🔊" : "🤖";
-      li.innerHTML = `<span class="t">${h.t}</span><span class="x" title="${esc(h.error || "Kliknij, by wstawić do pola tekstowego")}"><span class="o">${icon}</span>${esc(h.text)}</span>`;
-      li.querySelector(".x").onclick = () => { $("freeText").value = h.text; $("freeText").focus(); };
+      const fileHint = h.file ? ` [${h.file}]` : "";
+      li.innerHTML = `<span class="t">${h.t}</span><span class="x" title="${esc(h.error || (h.text + fileHint))}"><span class="o">${icon}</span>${esc(h.label || h.text)}</span>`;
       hist.append(li);
     }
   }
   paintLines();
-}
-
-function renderPitch(p, live) {
-  if (!p) return;
-  const el = $("pitch");
-  el.min = p.min; el.max = p.max;
-  const busy = el.matches(":active") || document.activeElement === el;
-  if (!busy) { el.value = p.value; showPitch(p.value, p); }
-  $("pitchReset").disabled = !p.manual;
-  $("pitchField").title = (live ? "" : "UWAGA: odtwarzacz nie zmienia wysokości na żywo - działa po przeliczeniu MP3. ") +
-    `Wysokość głosu na głośniku. Robot mówi z pitchShift ${p.robot}.`;
-}
-
-function showPitch(v, p) {
-  const tag = p && !p.manual ? " <small>(jak robot)</small>" : "";
-  $("pitchVal").innerHTML = (+v).toFixed(2) + "×" + tag;
 }
 
 async function poll() {
@@ -407,16 +425,6 @@ function bind() {
   });
   renderOutput();
 
-  $("recordBtn").onclick = async (e) => {
-    try {
-      if (state.status.bulk?.running) { await api("/api/record_all/cancel", {}); return; }
-      const force = e.shiftKey;
-      if (force && !confirm("Nagrać od nowa WSZYSTKIE kwestie (nadpisze istniejące MP3)?")) return;
-      await api("/api/record_all", { force });
-      toast("Nagrywanie głosem NAO… pliki trafiają do folderu nagrania/");
-    } catch (err) { toast(err.message, true); }
-  };
-
   $("connectBtn").onclick = async () => {
     try {
       if (state.status.status === "disconnected") {
@@ -433,33 +441,19 @@ function bind() {
     if (e.key === "Escape" && !$("pasteDialog").open) { e.preventDefault(); stop(); }
   });
 
-  $("lang").onchange = async (e) => {
-    try { await api("/api/language", { value: e.target.value }); } catch (err) { toast(err.message, true); }
-  };
   $("vol").oninput = (e) => ($("volVal").textContent = e.target.value);
   $("vol").onchange = async (e) => {
     try { await api("/api/volume", { value: +e.target.value }); } catch (err) { toast(err.message, true); }
   };
 
-  $("pitch").oninput = (e) => showPitch(e.target.value, { manual: true });
-  $("pitch").onchange = async (e) => {
-    try { await api("/api/pitch", { value: +e.target.value }); } catch (err) { toast(err.message, true); }
-    e.target.blur();
-  };
-  $("pitchReset").onclick = async () => {
-    try { await api("/api/pitch", { value: null }); } catch (err) { toast(err.message, true); }
-  };
-
-  $("freeSay").onclick = async () => {
-    const text = $("freeText").value.trim();
-    if (!text) return;
-    try { await say(text, ""); $("freeText").value = ""; } catch (e) { toast(e.message, true); }
-  };
-
   $("fileSelect").onchange = (e) => loadServerFile(e.target.value);
   $("reloadBtn").onclick = async () => {
-    if (state.source) return loadServerFile(state.source);
-    try { await refreshTable(); toast("Odświeżono listę plików"); } catch (e) { toast(e.message, true); }
+    try {
+      if (state.source) await loadServerFile(state.source);
+      else await refreshTable();
+      await refreshRecorded();
+      toast("Odświeżono tabelę i listę nagrań");
+    } catch (e) { toast(e.message, true); }
   };
   $("fileInput").onchange = (e) => { if (e.target.files[0]) uploadFile(e.target.files[0]); e.target.value = ""; };
 

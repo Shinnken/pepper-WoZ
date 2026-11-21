@@ -342,15 +342,18 @@ dialog::backdrop { background: #000a; }
 body.out-speaker #animatedField { opacity: .4; }
 
 .rec-info { color: var(--muted); font-size: 13px; }
-.rec-info b { color: var(--text); }
+.rec-info b { color: var(--speak); }
+.rec-info.missing b { color: var(--used); }
+.rec-info code { color: var(--text); font-size: 12px; }
 
-.line .badges { position: absolute; top: 7px; right: 9px; display: flex; gap: 4px; font-size: 12px; }
-.line .badge { color: var(--muted); opacity: .8; }
-.line .badge.mp3 { color: #b48cff; }
-body.out-speaker .line:not(.has-mp3) .lbl { color: #c9cdd3; }
-body.out-speaker .line:not(.has-mp3) { border-left-style: dashed; }
-.line .lbl { padding-right: 30px; }
-.line.recording { outline: 2px dashed #b48cff; outline-offset: -2px; }
+.line .badges { position: absolute; top: 7px; right: 9px; display: flex; align-items: center; gap: 5px; font-size: 12px; }
+.line .idx { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; background: var(--bg); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line); }
+.line .badge { color: var(--muted); opacity: .85; }
+.line .badge.mp3 { color: var(--speak); }
+.line .badge.no-mp3 { color: var(--danger); }
+.line.missing-mp3 { border-left-style: dashed; border-left-color: #6b4346; }
+.line.drag-target { outline: 2px dashed var(--accent); background: #1e2a3d; }
+.line .lbl { padding-right: 48px; }
 
 .group-head {
   grid-column: 1 / -1;
