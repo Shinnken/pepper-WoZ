@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 nagrania_demo/
+nagrania/.robot_wav/
 dialogi/.ostatnia_tabela
 ffmpeg/
 *.zip

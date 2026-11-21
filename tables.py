@@ -12,7 +12,8 @@ Rozpoznawane kolumny (wielkość liter i polskie znaki bez znaczenia):
   label    - etykieta przycisku
   value    - tekst, który robot ma powiedzieć
   order    - kolejność (opcjonalnie)
-  output   - kto mówi: robot / narrator (głośnik PC, nagranie głosu NAO); puste = przełącznik w panelu
+  output   - kto mówi: robot / narrator (głośnik PC); puste = przełącznik w panelu
+  file     - plik nagrania audio (opcjonalnie; bez niego plik jest szukany w nagrania/<zestaw>/<etykieta>)
 
 Bez nagłówka kolumny są zgadywane po ich liczbie:
   1: tekst | 2: etykieta, tekst | 3: grupa, etykieta, tekst
@@ -30,7 +31,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
 
-FIELDS = ("set", "section", "group", "label", "value", "order", "output")
+FIELDS = ("set", "section", "group", "label", "value", "order", "output", "file")
 
 ALIASES = {
     "set": {"set", "zestaw", "wariant", "warunek", "condition", "grupabadawcza", "mode", "tryb", "variant"},
@@ -41,6 +42,7 @@ ALIASES = {
               "speech", "dialog", "dialogue", "content", "zdanie", "kwestiadialogowa", "mowa"},
     "order": {"order", "kolejnosc", "nr", "lp", "no", "index", "sort", "pozycja"},
     "output": {"output", "wyjscie", "mowca", "speaker", "kto", "glos", "voice", "device", "urzadzenie", "odtwarzanie"},
+    "file": {"file", "plik", "nagranie", "audio", "mp3", "wav", "dzwiek", "sound", "recording", "sciezka", "path"},
 }
 
 # Wartości kolumny "output": kto wypowiada kwestię.
@@ -408,7 +410,7 @@ def _clean_rows(rows):
 
 def build_dialogues(sheets, name="tabela"):
     warnings = []
-    entries = []  # (set, section, group, label, value, order, seq, output)
+    entries = []  # (set, section, group, label, value, order, seq, output, file)
     nonempty = [(sheet, _clean_rows(rows)) for sheet, rows in sheets]
     nonempty = [(s, r) for s, r in nonempty if r]
     if not nonempty:
@@ -444,13 +446,13 @@ def build_dialogues(sheets, name="tabela"):
             seq += 1
             entries.append((get(row, "set").lower() or "default", section or "Kwestie",
                             get(row, "group"), label or value, value or label, order, seq,
-                            normalize_output(get(row, "output"))))
+                            normalize_output(get(row, "output")), get(row, "file")))
 
     if not entries:
         raise TableError("Nie znaleziono żadnych kwestii w tabeli.")
 
     sections, items_by_key = {}, {}
-    for set_name, section, group, label, value, order, s, output in entries:
+    for set_name, section, group, label, value, order, s, output, audio_file in entries:
         sec = sections.get(section)
         if sec is None:
             sec = sections[section] = {
@@ -466,7 +468,7 @@ def build_dialogues(sheets, name="tabela"):
         if item is None:
             item = items_by_key[key] = {
                 "id": hashlib.sha1("\x1f".join(key).encode("utf-8")).hexdigest()[:12],
-                "label": label, "values": {}, "order": order, "seq": s, "output": output,
+                "label": label, "values": {}, "files": {}, "order": order, "seq": s, "output": output,
             }
             grp["items"].append(item)
         else:
@@ -477,16 +479,21 @@ def build_dialogues(sheets, name="tabela"):
             warnings.append("Powtórzona etykieta „%s” (%s / %s) - użyto pierwszej wersji." % (label, section, group or "-"))
             continue
         item["values"][set_name] = value
+        if audio_file:
+            item["files"][set_name] = audio_file
 
     def sort_key(x):
         return (x["order"] if x["order"] is not None else float("inf"), x["seq"])
 
     out_sections = []
+    idx = 0
     for sec in sorted(sections.values(), key=lambda x: x["seq"]):
         groups = []
         for grp in sorted(sec["groups"].values(), key=lambda x: x["seq"]):
             items = sorted(grp["items"], key=sort_key)
             for it in items:
+                idx += 1
+                it["index"] = idx
                 it.pop("seq", None)
                 it.pop("order", None)
             groups.append({"name": grp["name"], "items": items})
